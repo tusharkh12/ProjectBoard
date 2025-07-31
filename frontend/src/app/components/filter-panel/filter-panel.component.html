@@ -1,0 +1,116 @@
+    <div class="jira-dropdown-container">
+      <!-- Enhanced Header with Clear button -->
+      <div class="dropdown-header">
+        <div class="header-left">
+          <mat-icon class="filter-icon">tune</mat-icon>
+          <span class="filters-title">FILTERS</span>
+        </div>
+        <button mat-button class="clear-all-btn" (click)="parent.clearAllFilters(); close()" 
+                [disabled]="!hasActiveFilters()">
+          <mat-icon>clear_all</mat-icon>
+          <span>Clear all</span>
+        </button>
+      </div>
+
+      <!-- Status Section with Enhanced Visual Design -->
+      <div class="filter-section">
+        <div class="section-header">
+          <div class="section-title">
+            <mat-icon class="section-icon">assignment_turned_in</mat-icon>
+            <span class="section-label">Status</span>
+          </div>
+          @if (parent.getSelectedStatusCount() > 0) {
+            <span class="selection-count">{{ parent.getSelectedStatusCount() }}</span>
+          }
+        </div>
+        <div class="status-chips">
+          @for(status of parent.availableStatuses(); track status.value) {
+            <button class="enhanced-chip status-chip"
+                    [class.active]="parent.isStatusSelected(status.value)"
+                    [attr.data-status]="status.value"
+                    (click)="parent.toggleStatusSelection(status.value, !parent.isStatusSelected(status.value))">
+              <div class="chip-content">
+                <span class="status-indicator" [class]="'dot-' + status.value"></span>
+                <span class="chip-text">{{ status.label }}</span>
+                @if (parent.isStatusSelected(status.value)) {
+                  <mat-icon class="check-icon">check</mat-icon>
+                }
+              </div>
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Priority Section with Enhanced Visual Design -->
+      <div class="filter-section">
+        <div class="section-header">
+          <div class="section-title">
+            <mat-icon class="section-icon">flag</mat-icon>
+            <span class="section-label">Priority</span>
+          </div>
+          @if (parent.getSelectedPriorityCount() > 0) {
+            <span class="selection-count">{{ parent.getSelectedPriorityCount() }}</span>
+          }
+        </div>
+        <div class="priority-chips">
+          @for(priority of parent.availablePriorities(); track priority.value) {
+            <button class="enhanced-chip priority-chip"
+                    [class.active]="parent.isPrioritySelected(priority.value)"
+                    [attr.data-priority]="priority.value"
+                    (click)="parent.togglePrioritySelection(priority.value, !parent.isPrioritySelected(priority.value))">
+              <div class="chip-content">
+                <mat-icon class="priority-icon" [class]="'priority-' + priority.value">
+                  {{ getPriorityIcon(priority.value) }}
+                </mat-icon>
+                <span class="chip-text">{{ priority.label }}</span>
+                @if (parent.isPrioritySelected(priority.value)) {
+                  <mat-icon class="check-icon">check</mat-icon>
+                }
+              </div>
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Enhanced Bottom Controls -->
+      <div class="bottom-controls">
+        <!-- Sort Section -->
+        <div class="control-group">
+          <div class="control-header">
+            <mat-icon class="control-icon">sort</mat-icon>
+            <span class="control-label">Sort</span>
+          </div>
+          <div class="sort-controls">
+            <select class="enhanced-select" [value]="parent.sortBy()" (change)="onSortChange($event)">
+              @for(option of parent.sortOptions(); track option.value) {
+                <option [value]="option.value">{{ option.label }}</option>
+              }
+            </select>
+            <button class="direction-toggle" 
+                    (click)="parent.toggleSortDirection()"
+                    [class.active]="parent.sortDirection() === 'desc'"
+                    [title]="parent.sortDirection() === 'asc' ? 'Switch to Descending' : 'Switch to Ascending'">
+              <mat-icon>{{ parent.sortDirection() === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
+            </button>
+          </div>
+        </div>
+        
+        <!-- View Mode Section -->
+        <div class="control-group">
+          <div class="control-header">
+            <mat-icon class="control-icon">view_module</mat-icon>
+            <span class="control-label">View</span>
+          </div>
+          <div class="view-toggle-group">
+            @for(mode of viewModes; track mode.value) {
+              <button class="view-toggle-btn"
+                      [class.active]="parent.viewMode() === mode.value"
+                      [title]="mode.label"
+                      (click)="parent.setViewMode(mode.value)">
+                <mat-icon>{{ mode.icon }}</mat-icon>
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+    </div>

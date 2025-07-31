@@ -1,0 +1,424 @@
+    <div class="task-editor" [class.edit-mode]="isEditMode()">
+      <!-- Header -->
+      <div class="editor-header">
+        <div class="header-left">
+          @if (isEditMode() && task()) {
+            <div class="issue-id">{{ IssueUtils.generateIssueId(task()!.id || 0) }}</div>
+            <div class="priority-indicator" 
+                 [class]="'priority-' + task()!.priority.toLowerCase()"
+                 [matTooltip]="getPriorityDisplay(task()!.priority)">
+              <mat-icon>{{ getPriorityIcon(task()!.priority) }}</mat-icon>
+            </div>
+          }
+          <h2 mat-dialog-title class="editor-title">
+            <mat-icon>{{ isEditMode() ? '' : 'add_task' }}</mat-icon>
+            {{ isEditMode() ? '' : 'Create New Task' }}
+          </h2>
+        </div>
+        <div class="header-actions">
+          @if (isEditMode() && task()) {
+            <span class="version-info" matTooltip="Optimistic Locking Version">
+              v{{ task()!.version || 0 }}
+            </span>
+          }
+          <button mat-icon-button mat-dialog-close matTooltip="Close">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <mat-divider></mat-divider>
+
+      <!-- Content -->
+      <mat-dialog-content class="editor-content">
+        <form [formGroup]="taskForm" (ngSubmit)="save()" novalidate>
+          
+          <!-- Title -->
+          <mat-form-field appearance="outline" class="full-width title-field">
+            <mat-label>Title *</mat-label>
+            <input matInput 
+                   formControlName="title"
+                   placeholder="What needs to be done?"
+                   maxlength="200"
+                   aria-label="Task title">
+            <mat-icon matSuffix>title</mat-icon>
+            <mat-hint align="end">{{ taskForm.get('title')?.value?.length || 0 }}/200</mat-hint>
+            @if (taskForm.get('title')?.invalid && taskForm.get('title')?.touched) {
+              <mat-error>
+                @if (taskForm.get('title')?.errors?.['required']) {
+                  Title is required
+                }
+                @if (taskForm.get('title')?.errors?.['minlength']) {
+                  Title must be at least 3 characters
+                }
+              </mat-error>
+            }
+          </mat-form-field>
+
+          <!-- Description -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Description</mat-label>
+            <textarea matInput 
+                      formControlName="description"
+                      placeholder="Describe the task in detail..."
+                      rows="4"
+                      maxlength="1000"
+                      aria-label="Task description"></textarea>
+            <mat-icon matSuffix>description</mat-icon>
+            <mat-hint align="end">{{ taskForm.get('description')?.value?.length || 0 }}/1000</mat-hint>
+          </mat-form-field>
+
+          <!-- Status and Priority Row -->
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="field-half">
+              <mat-label>Status</mat-label>
+              <mat-select formControlName="status" required aria-label="Task status">
+                <mat-select-trigger>
+                  @if (taskForm.get('status')?.value) {
+                    <div class="status-option">
+                      <div class="status-dot" [class]="'dot-' + taskForm.get('status')?.value.toLowerCase()"></div>
+                      <span>{{ getStatusDisplay(taskForm.get('status')?.value) }}</span>
+                    </div>
+                  }
+                </mat-select-trigger>
+                @for (status of statusOptions(); track status.value) {
+                  <mat-option [value]="status.value">
+                    <div class="status-option">
+                      <div class="status-dot" [class]="'dot-' + status.value.toLowerCase()"></div>
+                      <span>{{ status.label }}</span>
+                    </div>
+                  </mat-option>
+                }
+              </mat-select>
+              <mat-icon matSuffix>track_changes</mat-icon>
+              @if (taskForm.get('status')?.invalid && taskForm.get('status')?.touched) {
+                <mat-error>Status is required</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="field-half">
+              <mat-label>Priority</mat-label>
+              <mat-select formControlName="priority" required aria-label="Task priority">
+                <mat-select-trigger>
+                  @if (taskForm.get('priority')?.value) {
+                    <div class="priority-option">
+                      <mat-icon class="priority-icon" [class]="taskForm.get('priority')?.value.toLowerCase()">
+                        {{ getPriorityIcon(taskForm.get('priority')?.value) }}
+                      </mat-icon>
+                      <span>{{ getPriorityDisplay(taskForm.get('priority')?.value) }}</span>
+                    </div>
+                  }
+                </mat-select-trigger>
+                @for (priority of priorityOptions(); track priority.value) {
+                  <mat-option [value]="priority.value">
+                    <div class="priority-option">
+                      <mat-icon class="priority-icon" [class]="priority.value.toLowerCase()">
+                        {{ getPriorityIcon(priority.value) }}
+                      </mat-icon>
+                      <span>{{ priority.label }}</span>
+                    </div>
+                  </mat-option>
+                }
+              </mat-select>
+              <mat-icon matSuffix>flag</mat-icon>
+              @if (taskForm.get('priority')?.invalid && taskForm.get('priority')?.touched) {
+                <mat-error>Priority is required</mat-error>
+              }
+            </mat-form-field>
+          </div>
+
+          <!-- Assignee and Hours Row -->
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="field-half">
+              <mat-label>Assignee</mat-label>
+              <input matInput 
+                     formControlName="assignee"
+                     placeholder="Assign to..."
+                     maxlength="100"
+                     [matAutocomplete]="assigneeAuto"
+                     (input)="onAssigneeInput($event)"
+                     aria-label="Task assignee">
+              <mat-autocomplete #assigneeAuto="matAutocomplete" [displayWith]="displayAssignee">
+                @for (user of filteredAssignees(); track user) {
+                  <mat-option [value]="user">
+                    <div class="assignee-option">
+                      <div class="assignee-avatar">{{ user.charAt(0).toUpperCase() }}</div>
+                      <span>{{ user }}</span>
+                    </div>
+                  </mat-option>
+                }
+              </mat-autocomplete>
+              <mat-icon matSuffix>person</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="field-half">
+              <mat-label>Estimated Hours</mat-label>
+              <input matInput 
+                     type="number"
+                     formControlName="estimatedHours"
+                     placeholder="0"
+                     min="0"
+                     max="1000"
+                     step="0.5"
+                     aria-label="Estimated hours">
+              <mat-icon matSuffix>schedule</mat-icon>
+              @if (taskForm.get('estimatedHours')?.invalid && taskForm.get('estimatedHours')?.touched) {
+                <mat-error>
+                  @if (taskForm.get('estimatedHours')?.errors?.['min']) {
+                    Hours must be positive
+                  }
+                  @if (taskForm.get('estimatedHours')?.errors?.['max']) {
+                    Hours cannot exceed 1000
+                  }
+                </mat-error>
+              }
+            </mat-form-field>
+          </div>
+
+          <!-- Tags Chip Input -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Tags</mat-label>
+            <mat-chip-grid #chipGrid aria-label="Task tags">
+              @for (tag of selectedTags(); track tag) {
+                <mat-chip-row (removed)="removeTag(tag)">
+                  {{ tag }}
+                  <button matChipRemove [attr.aria-label]="'Remove ' + tag">
+                    <mat-icon>cancel</mat-icon>
+                  </button>
+                </mat-chip-row>
+              }
+              <input placeholder="Add tags (e.g., urgent, bug, frontend)..."
+                     formControlName="tagInput"
+                     [matChipInputFor]="chipGrid"
+                     [matAutocomplete]="auto"
+                     (keydown)="onTagInputKeydown($event)"
+                     (input)="onTagInput($event)"
+                     (blur)="onTagInputBlur($event)"
+                     aria-label="Add new tag">
+            </mat-chip-grid>
+            <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onTagSelected($event.option.value)">
+              @for (tag of filteredTags(); track tag) {
+                <mat-option [value]="tag">{{ tag }}</mat-option>
+              }
+            </mat-autocomplete>
+            <mat-icon matSuffix>label</mat-icon>
+            <mat-hint>Type tag and press Enter, comma, or click away. Use commas for multiple: a, b, c</mat-hint>
+          </mat-form-field>
+
+          @if (isEditMode() && task()) {
+            <mat-divider></mat-divider>
+            <!-- Metadata -->
+            <div class="metadata-section">
+              <h4>Task Information</h4>
+              <div class="metadata-grid">
+                <div class="metadata-item">
+                  <span class="label">Created:</span>
+                  <span class="value">{{ formatDate(task()!.createdAt!) }}</span>
+                </div>
+                <div class="metadata-item">
+                  <span class="label">Updated:</span>
+                  <span class="value">{{ formatDate(task()!.updatedAt!) }}</span>
+                </div>
+                <div class="metadata-item">
+                  <span class="label">Created by:</span>
+                  <span class="value">{{ task()!.createdBy || 'System' }}</span>
+                </div>
+                <div class="metadata-item">
+                  <span class="label">Updated by:</span>
+                  <span class="value">{{ task()!.updatedBy || 'System' }}</span>
+                </div>
+              </div>
+            </div>
+          }
+
+        </form>
+      </mat-dialog-content>
+
+      <!-- Actions -->
+      <mat-dialog-actions align="end" class="editor-actions">
+        <button mat-stroked-button 
+                mat-dialog-close 
+                type="button"
+                [disabled]="saving()">
+          <mat-icon>close</mat-icon>
+          Cancel
+        </button>
+        <button mat-raised-button 
+                color="primary" 
+                (click)="save()"
+                [disabled]="taskForm.invalid || saving() || (isEditMode() && !hasFormChanges())"
+                [matTooltip]="getValidationMessage()">
+          @if (saving()) {
+            <mat-spinner diameter="20"></mat-spinner>
+          } @else {
+            <mat-icon>{{ isEditMode() ? 'save' : 'add_task' }}</mat-icon>
+          }
+                      {{ isEditMode() ? 'Save Changes' : 'Create Task' }}
+        </button>
+      </mat-dialog-actions>
+    </div>
+
+    <!-- Conflict Resolution Dialog -->
+    @if (showConflictDialog()) {
+      <div class="conflict-overlay" (click)="resolveConflict('cancel')">
+        <div class="conflict-dialog" (click)="$event.stopPropagation()">
+          <div class="conflict-header">
+            <mat-icon class="conflict-icon">warning</mat-icon>
+            <h3>Conflict Detected – This Task Was Modified by Another User</h3>
+          </div>
+          
+          <div class="conflict-content">
+            @if (conflictData()) {
+              <!-- Version Information -->
+              <div class="version-banner">
+                <div class="version-item user-version">
+                  <mat-icon>person</mat-icon>
+                  <div class="version-details">
+                    <span class="version-label">Your Version:</span>
+                    <span class="version-number">Version {{ task()?.version ?? 'unknown' }} (your changes)</span>
+                  </div>
+                </div>
+                <div class="version-item server-version">
+                  <mat-icon>cloud</mat-icon>
+                  <div class="version-details">
+                    <span class="version-label">Server Version:</span>
+                    <span class="version-number">Version {{ conflictData()!.currentData.version || 'unknown' }} (latest)</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Side-by-Side Comparison -->
+              <div class="comparison-section">
+                <h4>Field Comparison</h4>
+                <div class="comparison-table">
+                  <div class="comparison-header">
+                    <div class="field-column">Field</div>
+                    <div class="your-changes-column">Your Changes</div>
+                    <div class="server-changes-column">Latest Server Version</div>
+                  </div>
+
+                  <!-- Dynamic Field Comparison - Only show conflicting fields -->
+                  @for (field of getConflictingFields(); track field) {
+                    <div class="comparison-row has-conflict">
+                      <div class="field-name">{{ getFieldDisplayName(field) }}</div>
+                      <div class="your-value">
+                        @if (field === 'status') {
+                          <span class="status-badge" [class]="'status-' + getCurrentFormValue('status').toLowerCase()">
+                            {{ getStatusDisplay(getCurrentFormValue('status')) }}
+                          </span>
+                        } @else if (field === 'priority') {
+                          <span class="priority-badge" [class]="'priority-' + getCurrentFormValue('priority').toLowerCase()">
+                            <mat-icon>{{ getPriorityIcon(getCurrentFormValue('priority')) }}</mat-icon>
+                            {{ getPriorityDisplay(getCurrentFormValue('priority')) }}
+                          </span>
+                        } @else {
+                          {{ getFieldDisplayValue(field, 'user') }}
+                        }
+                      </div>
+                      <div class="server-value">
+                        @if (field === 'status') {
+                          <span class="status-badge" [class]="'status-' + conflictData()!.currentData.status.toLowerCase()">
+                            {{ getStatusDisplay(conflictData()!.currentData.status) }}
+                          </span>
+                        } @else if (field === 'priority') {
+                          <span class="priority-badge" [class]="'priority-' + conflictData()!.currentData.priority.toLowerCase()">
+                            <mat-icon>{{ getPriorityIcon(conflictData()!.currentData.priority) }}</mat-icon>
+                            {{ getPriorityDisplay(conflictData()!.currentData.priority) }}
+                          </span>
+                        } @else {
+                          {{ getFieldDisplayValue(field, 'server') }}
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+
+          <div class="conflict-actions">
+            <button mat-raised-button color="primary" (click)="resolveConflict('override')" class="override-btn">
+              <mat-icon>save</mat-icon>
+              Save My Changes
+            </button>
+            <button mat-stroked-button (click)="resolveConflict('discard')" class="discard-btn">
+              <mat-icon>refresh</mat-icon>
+              Discard Changes
+            </button>
+            <button mat-raised-button color="accent" (click)="resolveConflict('merge')" class="merge-btn">
+              <mat-icon>merge_type</mat-icon>
+              Merge Manually
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Merge Dialog -->
+    @if (showMergeDialog()) {
+      <div class="merge-overlay" (click)="cancelMerge()">
+        <div class="merge-dialog" (click)="$event.stopPropagation()">
+          <div class="merge-header">
+            <mat-icon class="merge-icon">merge_type</mat-icon>
+            <h3>Merge Changes Manually</h3>
+          </div>
+          
+          <div class="merge-content">
+            @if (conflictData()) {
+              <p>Select which version to keep for each conflicting field:</p>
+              
+              <div class="merge-fields">
+                @for (field of getConflictingFields(); track field) {
+                  <div class="merge-field">
+                    <div class="field-header">
+                      <h4>{{ getFieldDisplayName(field) }}</h4>
+                    </div>
+                    
+                    <div class="merge-options">
+                      <div class="merge-option" 
+                           [class.selected]="mergeSelections()[field] === 'user'"
+                           (click)="selectMergeOption(field, 'user')">
+                        <div class="option-header">
+                          <input type="radio" 
+                                 [checked]="mergeSelections()[field] === 'user'"
+                                 (change)="selectMergeOption(field, 'user')">
+                          <span class="option-label">Keep Your Changes</span>
+                        </div>
+                        <div class="option-value">{{ getFieldDisplayValue(field, 'user') }}</div>
+                      </div>
+                      
+                      <div class="merge-option"
+                           [class.selected]="mergeSelections()[field] === 'server'"
+                           (click)="selectMergeOption(field, 'server')">
+                        <div class="option-header">
+                          <input type="radio"
+                                 [checked]="mergeSelections()[field] === 'server'"
+                                 (change)="selectMergeOption(field, 'server')">
+                          <span class="option-label">Keep Server Version</span>
+                        </div>
+                        <div class="option-value">{{ getFieldDisplayValue(field, 'server') }}</div>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          <div class="merge-actions">
+            <button mat-stroked-button (click)="cancelMerge()">
+              <mat-icon>close</mat-icon>
+              Cancel
+            </button>
+            <button mat-raised-button color="primary" (click)="applyMerge()" [disabled]="saving()">
+              @if (saving()) {
+                <mat-spinner diameter="20"></mat-spinner>
+              } @else {
+                <mat-icon>save</mat-icon>
+              }
+              Apply Merge
+            </button>
+          </div>
+        </div>
+      </div>
+    }

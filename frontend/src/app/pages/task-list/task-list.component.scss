@@ -1,0 +1,1405 @@
+/*  Issues List Styles */
+.youtrack-issues {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--background-secondary);
+}
+
+/* Issues Header */
+.yt-issues-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border-light);
+  /*padding: 1px 1px;*/
+  flex-shrink: 0;
+}
+
+.yt-issues-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.yt-title-section {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.yt-page-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.yt-issues-count {
+  background: var(--surface-secondary);
+  color: var(--text-secondary);
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.yt-view-controls {
+  display: flex;
+  gap: 4px;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--border-radius);
+  padding: 2px;
+}
+
+.yt-view-controls button {
+  padding: 6px;
+  min-width: 36px;
+  border-radius: var(--border-radius);
+}
+
+.yt-view-controls button.active {
+  background: var(--yt-blue);
+  color: white;
+}
+
+     /* Jira Professional Filter Bar - Single Horizontal Line */
+ .jira-search-section {
+   margin-bottom: 24px;
+ }
+
+ .jira-filter-bar {
+   display: flex;
+   align-items: center;
+   gap: 12px;
+   flex-wrap: nowrap;
+   padding: 4px 12px;
+   background: var(--surface);
+   border: 1px solid var(--border-light);
+   border-radius: 8px;
+   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+   overflow-x: auto;
+   overflow-y: hidden;
+ }
+
+ .jira-search-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex: 1;
+  }
+
+ .search-icon {
+   color: var(--text-tertiary);
+   margin-right: 8px;
+   font-size: 18px;
+   width: 18px;
+   height: 18px;
+ }
+
+ .search-field {
+   flex: 1;
+   border: none;
+   outline: none;
+   background: transparent;
+   font-size: 14px;
+   color: var(--text-primary);
+   padding: 0;
+   font-family: inherit;
+ }
+
+.search-field::placeholder {
+   color: var(--text-tertiary);
+ }
+
+ .clear-search-btn {
+   background: none;
+   border: none;
+   cursor: pointer;
+   padding: 4px;
+   margin-left: 8px;
+   border-radius: 4px;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   color: var(--text-tertiary);
+   transition: all 0.2s ease;
+ }
+
+ .clear-search-btn:hover {
+   background: var(--surface-secondary);
+   color: var(--text-secondary);
+ }
+
+ .clear-search-btn mat-icon {
+   font-size: 16px;
+   width: 16px;
+   height: 16px;
+ }
+
+ /* View Options */
+ .view-options {
+   display: flex;
+   gap: 4px;
+ }
+
+ .view-btn {
+   padding: 6px 12px;
+   font-size: 13px;
+   font-weight: 500;
+   border-radius: 6px;
+   border: 1px solid var(--border-light);
+   background: white;
+   color: var(--text-secondary);
+   transition: all 0.2s ease;
+ }
+
+ .view-btn:hover {
+   background: var(--surface-secondary);
+   border-color: var(--text-tertiary);
+ }
+
+ .view-btn.active {
+   background: var(--yt-blue);
+   color: white;
+   border-color: var(--yt-blue);
+ }
+
+ /* Sort and Filter Dropdowns */
+ .sort-dropdown,
+ .filter-dropdown,
+ .display-dropdown {
+   padding: 6px 12px;
+   font-size: 13px;
+   font-weight: 500;
+   border-radius: 6px;
+   border: 1px solid var(--border-light);
+   background: white;
+   color: var(--text-primary);
+   transition: all 0.2s ease;
+   display: flex;
+   align-items: center;
+   gap: 6px;
+   min-width: 120px;
+ }
+
+ .sort-dropdown:hover,
+ .filter-dropdown:hover,
+ .display-dropdown:hover {
+   background: var(--surface-secondary);
+   border-color: var(--text-tertiary);
+ }
+
+ .dropdown-arrow {
+   font-size: 16px;
+   width: 16px;
+   height: 16px;
+   margin-left: auto;
+ }
+
+ .filter-count {
+   background: var(--yt-blue);
+   color: white;
+   padding: 2px 6px;
+   border-radius: 10px;
+   font-size: 11px;
+   font-weight: 600;
+   margin-left: 4px;
+ }
+
+
+.assignee-filter {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.assignee-avatars {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow: hidden;
+  max-width: 150px; /* Adjust as needed */
+}
+
+.assignee-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--yt-purple);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.assignee-avatar:hover {
+  transform: scale(1.1);
+  box-shadow: 0 2px 4px rgba(0, 102, 204, 0.3);
+}
+
+.assignee-avatar.active {
+  border: 3px solid var(--yt-blue);
+  box-shadow: none;
+}
+
+.assignee-avatar.active::after {
+  display: none;
+}
+
+.selection-indicator {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 16px;
+  height: 16px;
+  background: var(--yt-blue);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.selection-indicator mat-icon {
+  font-size: 10px;
+  width: 10px;
+  height: 10px;
+  color: white;
+}
+
+.assignee-overflow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: var(--yt-blue-light);
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--yt-blue);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.assignee-overflow:hover {
+  background: var(--yt-blue);
+  color: white;
+  transform: scale(1.1);
+  box-shadow: 0 2px 4px rgba(0, 102, 204, 0.3);
+}
+
+       .filter-dropdown {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .filter-dropdown:hover {
+    background: var(--yt-blue-light);
+    color: var(--yt-blue);
+  }
+
+  .filter-dropdown mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  //.filter-count {
+  //  background: var(--yt-blue);
+  //  color: white;
+  //  padding: 2px 6px;
+  //  border-radius: 4px;
+  //  font-size: 12px;
+  //  font-weight: 500;
+  //}
+
+  .dropdown-arrow {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+/* Simple Dropdown Menu for Assignee/Status/Priority - matching Kanban Board */
+/*.jira-dropdown-menu {*/
+/*  min-width: 250px;*/
+/*  background: var(--surface);*/
+/*  border: 1px solid var(--border-light);*/
+/*  border-radius: 6px;*/
+/*  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);*/
+/*  padding: 0;*/
+/*}*/
+
+ .dropdown-header-container {
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+   padding: 12px 16px;
+   background: var(--surface);
+   border-bottom: 1px solid var(--border-light);
+   position: relative;
+ }
+
+ .dropdown-header {
+   font-size: 13px;
+   font-weight: 600;
+   color: var(--text-primary);
+   letter-spacing: 0.4px;
+   margin: 0;
+ }
+ 
+
+ .dropdown-option {
+   padding: 12px 16px;
+   display: flex;
+   align-items: center;
+   gap: 12px;
+   cursor: pointer;
+   transition: all 0.2s ease;
+   background: var(--surface);
+ }
+
+ .dropdown-option:hover {
+   background: var(--surface);
+ }
+
+ .dropdown-option.mat-checkbox-checked {
+   background: var(--yt-blue-light) !important;
+   color: var(--text-primary) !important;
+ }
+
+ .dropdown-option.mat-checkbox-checked:hover {
+   background: var(--yt-blue-light) !important;
+   color: var(--text-primary) !important;
+ }
+ 
+ /* Ensure checkbox text is visible in dark mode */
+ .dropdown-option .mat-mdc-checkbox-label {
+   color: var(--text-primary) !important;
+ }
+
+ .dropdown-option.mat-checkbox-checked .mat-mdc-checkbox-label {
+   color: var(--text-primary) !important;
+   font-weight: 500;
+ }
+
+ .option-content {
+   display: flex;
+   align-items: center;
+   gap: 12px;
+ }
+
+ .option-icon {
+   font-size: 16px;
+   width: 16px;
+   height: 16px;
+ }
+
+ .option-avatar {
+   width: 20px;
+   height: 20px;
+   border-radius: 50%;
+   background: var(--yt-purple);
+   color: white;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   font-size: 10px;
+   font-weight: 600;
+ }
+
+ .type-icon {
+   font-size: 16px;
+   width: 16px;
+   height: 16px;
+ }
+
+ .bug-icon { color: var(--priority-critical); }
+ .story-icon { color: var(--priority-high); }
+ .task-icon { color: var(--priority-medium); }
+ .subtask-icon { color: var(--priority-low); }
+
+ .clear-filters-btn {
+   display: flex;
+   align-items: center;
+   gap: 8px;
+   padding: 6px 12px;
+   background: transparent;
+   border: none;
+   border-radius: 6px;
+   font-size: 12px;
+   font-weight: 500;
+   color: var(--text-error);
+   cursor: pointer;
+   transition: all 0.2s ease;
+   text-decoration: none;
+ }
+
+ .clear-filters-btn:hover {
+   background: var(--surface-elevated);
+  color: var(--text-error);
+ }
+
+ .clear-filters-btn mat-icon {
+   font-size: 14px;
+   width: 14px;
+   height: 14px;
+ }
+
+ /* Status dots */
+ .status-dot {
+   width: 8px;
+   height: 8px;
+   border-radius: 50%;
+   flex-shrink: 0;
+ }
+
+ .status-dot.dot-backlog { background: var(--status-open); }
+ .status-dot.dot-in_progress { background: var(--status-progress); }
+ .status-dot.dot-review { background: var(--status-review); }
+ .status-dot.dot-testing { background: var(--status-testing); }
+ .status-dot.dot-done { background: var(--status-done); }
+
+ /* Priority icons */
+ .priority-icon {
+   font-size: 14px !important;
+   width: 14px !important;
+   height: 14px !important;
+ }
+
+ .priority-icon.priority-critical { color: var(--priority-critical); }
+ .priority-icon.priority-high { color: var(--priority-high); }
+ .priority-icon.priority-medium { color: var(--priority-medium); }
+ .priority-icon.priority-low { color: var(--priority-low); }
+
+/* Toolbar */
+.yt-issues-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.yt-toolbar-left,
+.yt-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.yt-sort-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.yt-create-btn {
+  font-weight: 600;
+}
+
+.yt-bulk-action {
+  color: var(--yt-blue);
+}
+
+.yt-bulk-action.yt-danger {
+  color: var(--text-error);
+}
+
+/* Content Area */
+.yt-issues-content {
+  flex: 1;
+  overflow: auto;
+  padding: 0 24px 24px;
+}
+
+/* Loading State */
+.yt-loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px;
+  gap: 16px;
+  color: var(--text-secondary);
+}
+
+/* Empty State */
+.yt-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.yt-empty-icon {
+  margin-bottom: 20px;
+}
+
+.yt-empty-icon mat-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  opacity: 0.5;
+}
+
+.yt-empty-state h3 {
+  color: var(--text-primary);
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.yt-empty-state p {
+  margin: 0 0 24px 0;
+  max-width: 400px;
+}
+
+/* Select Controls */
+.yt-select-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 12px;
+  border-bottom: 1px solid var(--border-light);
+  margin-bottom: 8px;
+}
+
+.yt-results-count {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* Issues List */
+.yt-issues-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.yt-issue-item {
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--border-radius);
+  padding: 16px;
+  display: flex;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.yt-issue-item:hover {
+  border-color: var(--yt-blue);
+  box-shadow: var(--shadow-2);
+}
+
+.yt-issue-item.selected {
+  border-color: var(--yt-blue);
+  background: var(--yt-blue-light);
+}
+
+.yt-issue-item.overdue {
+  border-left: 4px solid var(--text-error);
+}
+
+.yt-issue-checkbox {
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-start;
+  padding-top: 2px;
+}
+
+.yt-issue-priority {
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-start;
+  padding-top: 2px;
+}
+
+.yt-priority-badge {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.yt-priority-badge.yt-priority-critical { background: var(--priority-critical); }
+.yt-priority-badge.yt-priority-high { background: var(--priority-high); }
+.yt-priority-badge.yt-priority-medium { background: var(--priority-medium); }
+.yt-priority-badge.yt-priority-low { background: var(--priority-low); }
+
+.yt-priority-badge mat-icon {
+  font-size: 12px;
+  width: 12px;
+  height: 12px;
+}
+
+.yt-issue-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.yt-issue-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  gap: 16px;
+}
+
+.yt-issue-id-summary {
+  flex: 1;
+  min-width: 0;
+}
+
+.yt-issue-id {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.yt-issue-summary {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.4;
+  text-decoration: none;
+  word-break: break-word;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.yt-issue-summary:hover {
+  color: var(--text-link);
+  text-decoration: underline;
+}
+
+.yt-issue-status {
+  flex-shrink: 0;
+}
+
+.yt-status-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: white;
+}
+
+.yt-status-badge.yt-status-backlog { background: var(--status-open); }
+.yt-status-badge.yt-status-in_progress { background: var(--status-progress); }
+.yt-status-badge.yt-status-review { background: var(--status-review); }
+.yt-status-badge.yt-status-testing { background: var(--status-testing); }
+.yt-status-badge.yt-status-done { background: var(--status-done); }
+
+.yt-issue-description {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin: 8px 0;
+  line-height: 1.4;
+}
+
+.yt-issue-tags {
+  margin: 8px 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.yt-tag {
+  background: var(--yt-blue-light);
+  color: var(--yt-blue);
+  padding: 2px 6px;
+  border-radius: var(--border-radius);
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.yt-issue-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+  gap: 16px;
+}
+
+.yt-issue-metadata {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.yt-assignee,
+.yt-unassigned {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.yt-avatar-xs {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--yt-purple);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.yt-assignee-name {
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.yt-unassigned mat-icon {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+}
+
+.yt-time-estimate {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.yt-time-estimate mat-icon {
+  font-size: 12px;
+  width: 12px;
+  height: 12px;
+}
+
+.yt-overdue-indicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-error);
+  font-weight: 600;
+}
+
+.yt-overdue-indicator mat-icon {
+  font-size: 12px;
+  width: 12px;
+  height: 12px;
+}
+
+.yt-issue-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.yt-issue-timestamps {
+  font-size: 10px;
+  color: var(--text-tertiary);
+}
+
+.yt-action-menu {
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
+}
+
+.yt-action-menu mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+/* Compact View Adjustments */
+.yt-view-compact .yt-issue-item {
+  padding: 10px 16px;
+}
+
+.yt-view-compact .yt-issue-card {
+  padding: 8px 12px;
+}
+
+.yt-view-compact .yt-issue-header {
+  margin-bottom: 4px;
+}
+
+.yt-view-compact .yt-issue-footer {
+  margin-top: 8px;
+}
+
+.yt-view-compact .yt-issue-content {
+  padding: 0;
+}
+
+/* Compact Footer Styles */
+.yt-issue-footer-compact {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border-light);
+  gap: 8px;
+}
+
+.yt-assignee-compact {
+  display: flex;
+  align-items: center;
+}
+
+.yt-assignee-compact .yt-avatar-xs {
+  width: 18px;
+  height: 18px;
+  font-size: 9px;
+}
+
+.yt-updated-compact {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  margin-left: auto;
+}
+
+/* List View Adjustments */
+.yt-view-list .yt-issue-item {
+  padding: 8px 16px;
+}
+
+.yt-view-list .yt-issue-description {
+  display: none;
+}
+
+/* Error State */
+.yt-error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px;
+  text-align: center;
+  color: var(--text-error);
+  gap: 16px;
+}
+
+.yt-error-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+}
+
+.yt-error-state h3 {
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.yt-error-state p {
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* Menu Danger Items */
+.yt-danger-item {
+
+}
+
+/* ===== Jira Filter Menu polish ===== */
+.filter-menu-header {
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 12px;
+padding: 12px 16px;
+background: var(--surface);
+color: var(--text-primary);
+}
+
+.menu-clear-btn {
+height: 24px;
+line-height: 24px;
+font-size: 12px;
+padding: 0 8px;
+border: 1px solid var(--border-light);
+border-radius: 4px;
+color: var(--text-secondary);
+}
+
+.menu-clear-btn:hover {
+background: var(--yt-blue-light);
+border-color: var(--yt-blue);
+color: var(--yt-blue);
+}
+
+/* Filter Panel specific styling - NOT for simple dropdowns */
+.filter-panel-menu {
+background: var(--surface);
+border: 1px solid var(--border-light);
+border-radius: 8px;
+min-width: 480px;
+max-width: 640px;
+padding: 0;
+box-shadow: 0 12px 32px rgba(0,0,0,.55);
+}
+
+.filter-menu-header {
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 12px;
+padding: 14px 20px;
+background: var(--surface);
+border-bottom: 1px solid var(--border-light);
+font-size: 14px;
+font-weight: 600;
+letter-spacing: .4px;
+}
+
+.menu-clear-btn {
+height: 26px;
+padding: 0 10px;
+font-size: 12px;
+border-radius: 4px;
+color: var(--text-secondary);
+border: 1px solid var(--border-light);
+}
+.menu-clear-btn:hover {
+background: var(--yt-blue-light);
+color: var(--yt-blue);
+border-color: var(--yt-blue);
+}
+
+.menu-section {
+padding: 14px 20px;
+}
+
+.menu-section + .menu-section {
+border-top: 1px solid var(--border-light);
+}
+
+.section-title {
+font-size: 12px;
+font-weight: 600;
+text-transform: uppercase;
+color: var(--text-secondary);
+margin-bottom: 8px;
+}
+
+/*.dropdown-option {*/
+/*  padding: 4px 0;*/
+/*}*/
+
+.dropdown-option:hover {
+background: var(--surface-secondary);
+}
+
+.filter-subsection {
+display: flex;
+flex-wrap: wrap;
+gap: 8px;
+}
+
+/*.dropdown-option {*/
+/*  display: inline-flex;*/
+/*  align-items: center;*/
+/*  gap: 6px;*/
+/*  width: auto;*/
+/*  padding: 4px 8px;*/
+/*}*/
+
+/* keep previous rule overrides */
+
+.yt-danger-item {
+  color: var(--text-error) !important;
+}
+
+     /* Responsive */
+ @media (max-width: 768px) {
+   .yt-issues-header {
+     padding: 16px;
+   }
+
+   .yt-issues-title {
+     flex-direction: column;
+     align-items: flex-start;
+     gap: 12px;
+   }
+
+   .jira-filter-bar {
+     flex-direction: column;
+     align-items: flex-start;
+     gap: 12px;
+     padding: 12px;
+     max-width: 100%;
+   }
+
+   .jira-search-container {
+     width: 100%;
+   }
+
+   .assignee-filter {
+     width: 100%;
+     justify-content: flex-start;
+   }
+
+   .assignee-avatars {
+     max-width: 100%;
+     overflow: auto;
+     justify-content: flex-start;
+   }
+
+   .assignee-overflow {
+     display: none; /* Hide overflow count on small screens */
+   }
+
+   .filter-dropdown {
+     width: 100%;
+     justify-content: space-between;
+     padding: 8px 12px;
+   }
+
+   .filter-dropdown mat-icon {
+     margin-right: 8px;
+   }
+
+   //.filter-count {
+   //  margin-left: 0;
+   //}
+
+   .dropdown-arrow {
+     margin-left: 8px;
+   }
+
+   .jira-dropdown-menu {
+     min-width: 250px; /* Adjust for smaller screens */
+   }
+
+   .dropdown-header {
+     padding: 12px 16px;
+   }
+
+   /*.dropdown-option {*/
+   /*  padding: 12px 16px;*/
+   /*}*/
+
+   .option-content {
+     flex-direction: column;
+     align-items: flex-start;
+     gap: 4px;
+   }
+
+   .option-icon {
+     margin-right: 0;
+   }
+
+   .option-avatar {
+     margin-right: 0;
+   }
+
+   .type-icon {
+     margin-right: 0;
+   }
+
+   .bug-icon, .story-icon, .task-icon, .subtask-icon {
+     margin-right: 0;
+   }
+
+   .yt-issues-toolbar {
+     flex-direction: column;
+     align-items: stretch;
+     gap: 12px;
+   }
+
+   .yt-issues-content {
+     padding: 0 16px 16px;
+   }
+
+   .yt-issue-item {
+     padding: 12px;
+   }
+
+   .yt-issue-footer {
+     flex-direction: column;
+     align-items: flex-start;
+     gap: 8px;
+   }
+ }
+
+/* Professional Sort Toolbar */
+.professional-sort-toolbar {
+  background: white;
+  border-bottom: 1px solid var(--border-light);
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  min-height: 48px;
+}
+
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.toolbar-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.view-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.view-toggle-group {
+  display: flex;
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.view-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: none;
+  background: white;
+  color: var(--text-secondary);
+  font-size: 13px;
+  min-height: 36px;
+  border-radius: 0;
+  border-right: 1px solid var(--border-light);
+  transition: all 0.2s ease;
+}
+
+.view-toggle:last-child {
+  border-right: none;
+}
+
+.view-toggle:hover:not(.active) {
+  background: var(--surface-secondary);
+  color: var(--text-primary);
+}
+
+.view-toggle.active {
+  background: var(--yt-blue);
+  color: white;
+}
+
+.view-toggle mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.sort-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sort-dropdown {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: white;
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--text-primary);
+  min-height: 36px;
+  transition: all 0.2s ease;
+}
+
+.sort-dropdown:hover {
+  background: var(--surface-secondary);
+  border-color: var(--border-light);
+}
+
+.sort-dropdown .dropdown-arrow {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  color: var(--text-tertiary);
+}
+
+.sort-menu {
+  min-width: 200px;
+}
+
+.sort-menu-header {
+  padding: 12px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-light);
+  background: var(--surface-secondary);
+}
+
+.sort-menu button[mat-menu-item] {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  font-size: 13px;
+  min-height: 40px;
+}
+
+.sort-menu button[mat-menu-item].active {
+  background: var(--yt-blue-light);
+  color: var(--yt-blue);
+}
+
+.sort-menu .check-icon {
+  margin-left: auto;
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  color: var(--status-done);
+}
+
+.results-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.results-count {
+  font-size: 13px;
+  color: var(--text-secondary);
+  background: var(--surface-secondary);
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border-light);
+}
+
+.display-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.control-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: white;
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--text-primary);
+  min-height: 36px;
+  transition: all 0.2s ease;
+}
+
+.control-btn:hover {
+  background: var(--surface-secondary);
+  border-color: var(--border-light);
+}
+
+.control-btn mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.control-btn .dropdown-arrow {
+  color: var(--text-tertiary);
+}
+
+.menu-header {
+  padding: 12px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-light);
+  background: var(--surface-secondary);
+}
+
+:host ::ng-deep .mat-mdc-menu-content {
+  padding: 0;
+}
+
+:host ::ng-deep .mat-mdc-menu-item {
+  line-height: normal;
+}
+
+:host ::ng-deep .mat-mdc-menu-item .mat-mdc-checkbox {
+  margin-right: 8px;
+}
+
+/* Force proper styling for simple dropdowns */
+:host ::ng-deep .jira-dropdown-menu .mat-mdc-menu-content {
+  background: var(--surface) !important;
+  border: 1px solid var(--border-light) !important;
+  border-radius: 6px !important;
+  min-width: 250px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+:host ::ng-deep .jira-dropdown-menu .mat-mdc-menu-item {
+  background: var(--surface) !important;
+  min-height: auto !important;
+}
+
+/* Dark mode checkbox styling */
+:host ::ng-deep .jira-dropdown-menu .mat-mdc-checkbox .mdc-checkbox__native-control:enabled:checked~.mdc-checkbox__background {
+  background-color: var(--yt-blue) !important;
+  border-color: var(--yt-blue) !important;
+}
+
+:host ::ng-deep .jira-dropdown-menu .mat-mdc-checkbox .mdc-checkbox__checkmark {
+  color: white !important;
+}
+
+:host ::ng-deep .jira-dropdown-menu .mat-mdc-checkbox .mdc-form-field > label {
+  color: var(--text-primary) !important;
+}
