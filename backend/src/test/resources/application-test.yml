@@ -1,0 +1,28 @@
+spring:
+  # Test database configuration  
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driverClassName: org.h2.Driver
+    username: sa
+    password: 
+  
+  # JPA/Hibernate configuration for tests
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    defer-datasource-initialization: true
+  
+  # Disable data.sql loading in tests
+  sql:
+    init:
+      mode: never  # This prevents data.sql from being loaded during tests
+
+# Logging configuration for tests
+logging:
+  level:
+    com.projectboard: DEBUG
+    org.springframework.web: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
