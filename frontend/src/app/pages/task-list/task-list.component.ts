@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
@@ -64,7 +64,7 @@ import {FilterPanelComponent} from "../../components/filter-panel/filter-panel.c
   templateUrl: './task-list.component.html',
   styleUrls: ['./task-list.component.scss']
 })
-export class TaskListComponent implements OnInit {
+export class TaskListComponent implements OnInit, OnDestroy {
   // Angular 20 - Use inject() for DI
   readonly taskService = inject(TaskService);
   private readonly dialog = inject(MatDialog);
@@ -89,6 +89,11 @@ export class TaskListComponent implements OnInit {
   readonly viewMode = signal<'cards' | 'list' | 'compact'>('cards');
   readonly sortBy = signal<string>('updatedAt');
   readonly sortDirection = signal<'asc' | 'desc'>('desc');
+  readonly searchTerm = signal<string>('');
+  
+  // Stable timestamp for relative time calculations
+  private readonly currentTime = signal<number>(Date.now());
+  private timeUpdateInterval?: number;
   
   // Selection state
   readonly selectedIssues = signal<Task[]>([]);
@@ -121,8 +126,6 @@ export class TaskListComponent implements OnInit {
   ]);
 
   readonly sortOptions = signal([
-    { value: 'id', label: 'Issue ID', icon: 'tag' },
-    { value: 'title', label: 'Summary', icon: 'title' },
     { value: 'status', label: 'Status', icon: 'assignment_turned_in' },
     { value: 'priority', label: 'Priority', icon: 'flag' },
     { value: 'assignee', label: 'Assignee', icon: 'person' },
@@ -145,8 +148,8 @@ export class TaskListComponent implements OnInit {
   readonly sortedAndFilteredTasks = computed(() => {
     let tasks = this.allTasks();
 
-    // Apply search filter
-    const searchTerm = this.filterForm.get('searchTerm')?.value?.toLowerCase();
+    // Apply search filter - use signal for reactivity
+    const searchTerm = this.searchTerm().toLowerCase();
     if (searchTerm) {
       tasks = tasks.filter(task =>
         task.title.toLowerCase().includes(searchTerm) ||
@@ -175,7 +178,7 @@ export class TaskListComponent implements OnInit {
       );
     }
 
-    // Apply sorting
+    // Apply sorting - IMPORTANT: Read both signals to ensure reactivity
     const sortBy = this.sortBy();
     const sortDirection = this.sortDirection();
     tasks = tasks.slice().sort((a, b) => {
@@ -183,15 +186,6 @@ export class TaskListComponent implements OnInit {
       let bValue: any;
 
       switch (sortBy) {
-        case 'id':
-          aValue = Number(a.id) || 0;
-          bValue = Number(b.id) || 0;
-          break;
-        case 'title':
-        case 'summary':
-          aValue = (a.title || '').toLowerCase();
-          bValue = (b.title || '').toLowerCase();
-          break;
         case 'status':
           const statusOrder = { 
             [TaskStatus.BACKLOG]: 0, 
@@ -216,13 +210,9 @@ export class TaskListComponent implements OnInit {
           aValue = new Date(a.createdAt || '').getTime();
           bValue = new Date(b.createdAt || '').getTime();
           break;
-        case 'updatedAt':
+        default:
           aValue = new Date(a.updatedAt || a.createdAt || '').getTime();
           bValue = new Date(b.updatedAt || b.createdAt || '').getTime();
-          break;
-        default:
-          aValue = a.id || 0;
-          bValue = b.id || 0;
       }
       
       if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
@@ -235,6 +225,17 @@ export class TaskListComponent implements OnInit {
 
   ngOnInit(): void {
     this.refreshIssues();
+    
+    // Update time signal every minute to refresh relative timestamps
+    this.timeUpdateInterval = setInterval(() => {
+      this.currentTime.set(Date.now());
+    }, 60000) as any; // Update every minute
+  }
+
+  ngOnDestroy(): void {
+    if (this.timeUpdateInterval) {
+      clearInterval(this.timeUpdateInterval);
+    }
   }
 
   refreshIssues(): void {
@@ -245,17 +246,19 @@ export class TaskListComponent implements OnInit {
   // Search functionality
   updateSearch(event: Event): void {
     const target = event.target as HTMLInputElement;
+    this.searchTerm.set(target.value);
     this.filterForm.patchValue({ searchTerm: target.value });
   }
 
   clearSearch(): void {
+    this.searchTerm.set('');
     this.filterForm.patchValue({ searchTerm: '' });
   }
 
   // Filter methods
   hasActiveFilters(): boolean {
     return !!(
-      this.filterForm.get('searchTerm')?.value ||
+      this.searchTerm() ||
       this.selectedStatuses().length > 0 ||
       this.selectedPriorities().length > 0 ||
       this.selectedAssignees().length > 0 ||
@@ -265,7 +268,7 @@ export class TaskListComponent implements OnInit {
 
   getActiveFilterCount(): number {
     let count = 0;
-    if (this.filterForm.get('searchTerm')?.value) count++;
+    if (this.searchTerm()) count++;
     if (this.selectedStatuses().length > 0) count++;
     if (this.selectedPriorities().length > 0) count++;
     if (this.selectedAssignees().length > 0) count++;
@@ -274,6 +277,7 @@ export class TaskListComponent implements OnInit {
   }
 
   clearAllFilters(): void {
+    this.searchTerm.set('');
     this.filterForm.patchValue({ searchTerm: '' });
     this.selectedAssignees.set([]);
     this.selectedStatuses.set([]);
@@ -542,8 +546,9 @@ export class TaskListComponent implements OnInit {
 
   formatRelativeTime(timestamp: string): string {
     const date = new Date(timestamp);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
+    // Use stable signal to prevent ExpressionChangedAfterItHasBeenCheckedError
+    const nowTime = this.currentTime();
+    const diffMs = nowTime - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
@@ -574,8 +579,8 @@ export class TaskListComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      // Always refresh the list when dialog closes
-        this.refreshIssues();
+      // Always refresh the list when dialog closes to ensure consistency
+      this.refreshIssues();
     });
   }
 
@@ -595,9 +600,15 @@ export class TaskListComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      // Always refresh the list when dialog closes
-      // This ensures we get updated data and forces proper closure
+      // Check if task was actually updated and refresh accordingly
+      if (result && typeof result === 'object' && result.id) {
+        // Task was successfully updated
         this.refreshIssues();
+      } else if (result === 'refresh') {
+        // Explicit refresh request (e.g., after conflict resolution)
+        this.refreshIssues();
+      }
+      // For other cases (cancel, no changes), don't refresh unnecessarily
     });
   }
 } 
