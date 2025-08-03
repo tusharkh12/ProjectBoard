@@ -1,0 +1,335 @@
+<div class="task-form-container">
+  <!-- Header -->
+  <mat-card class="header-card">
+    <mat-card-header>
+      <div mat-card-avatar class="header-icon">
+        <mat-icon>{{ isEditMode() ? 'edit' : 'add_task' }}</mat-icon>
+      </div>
+      <mat-card-title>
+        {{ isEditMode() ? '✏️ Edit Task' : '➕ Create New Task' }}
+      </mat-card-title>
+      <mat-card-subtitle>
+        {{ isEditMode() ? 'Update task details and track changes' : 'Add a new task to your project board' }}
+      </mat-card-subtitle>
+    </mat-card-header>
+  </mat-card>
+
+  <!-- Loading State -->
+  @if (taskService.loading()) {
+    <div class="loading-container">
+      <mat-spinner></mat-spinner>
+      <p>{{ isEditMode() ? 'Loading task details...' : 'Creating task...' }}</p>
+    </div>
+  } @else {
+
+    <!-- Task Form -->
+    <mat-card class="form-card">
+      <form [formGroup]="taskForm" (ngSubmit)="onSubmit()" novalidate>
+        
+        <!-- Form Stepper -->
+        <mat-stepper [linear]="false" #stepper>
+          
+          <!-- Step 1: Basic Information -->
+          <mat-step [stepControl]="getBasicFormGroup()" label="Basic Information">
+            <div class="step-content">
+              <h3>📝 Task Details</h3>
+              
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Task Title *</mat-label>
+                  <input matInput 
+                         formControlName="title"
+                         placeholder="Enter a descriptive task title"
+                         maxlength="200">
+                  <mat-hint align="end">{{ taskForm.get('title')?.value?.length || 0 }}/200</mat-hint>
+                  @if (taskForm.get('title')?.invalid && taskForm.get('title')?.touched) {
+                    <mat-error>
+                      @if (taskForm.get('title')?.errors?.['required']) {
+                        Task title is required
+                      }
+                      @if (taskForm.get('title')?.errors?.['minlength']) {
+                        Title must be at least 3 characters long
+                      }
+                    </mat-error>
+                  }
+                </mat-form-field>
+              </div>
+
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Description</mat-label>
+                  <textarea matInput 
+                            formControlName="description"
+                            placeholder="Describe the task in detail"
+                            rows="4"
+                            maxlength="1000"></textarea>
+                  <mat-hint align="end">{{ taskForm.get('description')?.value?.length || 0 }}/1000</mat-hint>
+                  @if (taskForm.get('description')?.invalid && taskForm.get('description')?.touched) {
+                    <mat-error>
+                      Description cannot exceed 1000 characters
+                    </mat-error>
+                  }
+                </mat-form-field>
+              </div>
+
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="half-width">
+                  <mat-label>Assignee</mat-label>
+                  <input matInput 
+                         formControlName="assignee"
+                         placeholder="Who will work on this task?"
+                         maxlength="100">
+                  <mat-icon matSuffix>person</mat-icon>
+                  @if (taskForm.get('assignee')?.invalid && taskForm.get('assignee')?.touched) {
+                    <mat-error>
+                      Assignee name cannot exceed 100 characters
+                    </mat-error>
+                  }
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="half-width">
+                  <mat-label>Estimated Hours</mat-label>
+                  <input matInput 
+                         type="number"
+                         formControlName="estimatedHours"
+                         placeholder="0"
+                         min="0"
+                         max="1000"
+                         step="0.5">
+                  <mat-icon matSuffix>schedule</mat-icon>
+                  @if (taskForm.get('estimatedHours')?.invalid && taskForm.get('estimatedHours')?.touched) {
+                    <mat-error>
+                      @if (taskForm.get('estimatedHours')?.errors?.['min']) {
+                        Estimated hours must be positive
+                      }
+                      @if (taskForm.get('estimatedHours')?.errors?.['max']) {
+                        Estimated hours cannot exceed 1000
+                      }
+                    </mat-error>
+                  }
+                </mat-form-field>
+              </div>
+            </div>
+
+            <div class="step-actions">
+              <button mat-raised-button color="primary" matStepperNext type="button">
+                Next: Classification
+                <mat-icon>arrow_forward</mat-icon>
+              </button>
+            </div>
+          </mat-step>
+
+          <!-- Step 2: Classification -->
+          <mat-step [stepControl]="getClassificationFormGroup()" label="Classification">
+            <div class="step-content">
+              <h3>🏷️ Task Classification</h3>
+              
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="half-width">
+                  <mat-label>Status *</mat-label>
+                  <mat-select formControlName="status" required>
+                    @for (status of statusOptions(); track status.value) {
+                      <mat-option [value]="status.value">
+                        <div class="status-option">
+                          <mat-icon>{{ getStatusIcon(status.value) }}</mat-icon>
+                          <span>{{ status.label }}</span>
+                        </div>
+                      </mat-option>
+                    }
+                  </mat-select>
+                  @if (taskForm.get('status')?.invalid && taskForm.get('status')?.touched) {
+                    <mat-error>Please select a status</mat-error>
+                  }
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="half-width">
+                  <mat-label>Priority *</mat-label>
+                  <mat-select formControlName="priority" required>
+                    @for (priority of priorityOptions(); track priority.value) {
+                      <mat-option [value]="priority.value">
+                        <div class="priority-option" [class]="getPriorityClass(priority.value)">
+                          <mat-icon>{{ getPriorityIcon(priority.value) }}</mat-icon>
+                          <span>{{ priority.label }}</span>
+                        </div>
+                      </mat-option>
+                    }
+                  </mat-select>
+                  @if (taskForm.get('priority')?.invalid && taskForm.get('priority')?.touched) {
+                    <mat-error>Please select a priority</mat-error>
+                  }
+                </mat-form-field>
+              </div>
+
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Tags</mat-label>
+                  <input matInput 
+                         formControlName="tags"
+                         placeholder="Enter tags separated by commas (e.g., frontend, urgent, bug)"
+                         maxlength="500">
+                  <mat-icon matSuffix>label</mat-icon>
+                  <mat-hint>Use commas to separate multiple tags</mat-hint>
+                  @if (taskForm.get('tags')?.invalid && taskForm.get('tags')?.touched) {
+                    <mat-error>
+                      Tags cannot exceed 500 characters
+                    </mat-error>
+                  }
+                </mat-form-field>
+              </div>
+
+              <!-- Tag Preview -->
+              @if (tagPreview().length > 0) {
+                <div class="tag-preview">
+                  <h4>Tag Preview:</h4>
+                  <div class="tag-chips">
+                    @for (tag of tagPreview(); track tag) {
+                      <mat-chip class="preview-tag">{{ tag }}</mat-chip>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+
+            <div class="step-actions">
+              <button mat-stroked-button matStepperPrevious type="button">
+                <mat-icon>arrow_back</mat-icon>
+                Back
+              </button>
+              <button mat-raised-button color="primary" matStepperNext type="button">
+                Next: Review
+                <mat-icon>arrow_forward</mat-icon>
+              </button>
+            </div>
+          </mat-step>
+
+          <!-- Step 3: Review & Submit -->
+          <mat-step label="Review & Submit">
+            <div class="step-content">
+              <h3>📋 Review Task Details</h3>
+              
+              <div class="review-section">
+                <div class="review-item">
+                  <strong>Title:</strong>
+                  <span>{{ taskForm.get('title')?.value || 'Not specified' }}</span>
+                </div>
+                
+                <div class="review-item">
+                  <strong>Description:</strong>
+                  <span>{{ taskForm.get('description')?.value || 'No description' }}</span>
+                </div>
+                
+                <div class="review-item">
+                  <strong>Status:</strong>
+                  <mat-chip [class]="getStatusChipClass(taskForm.get('status')?.value)">
+                    <mat-icon>{{ getStatusIcon(taskForm.get('status')?.value) }}</mat-icon>
+                    {{ getStatusDisplay(taskForm.get('status')?.value) }}
+                  </mat-chip>
+                </div>
+                
+                <div class="review-item">
+                  <strong>Priority:</strong>
+                  <mat-chip [class]="getPriorityChipClass(taskForm.get('priority')?.value)">
+                    <mat-icon>{{ getPriorityIcon(taskForm.get('priority')?.value) }}</mat-icon>
+                    {{ getPriorityDisplay(taskForm.get('priority')?.value) }}
+                  </mat-chip>
+                </div>
+                
+                @if (taskForm.get('assignee')?.value) {
+                  <div class="review-item">
+                    <strong>Assignee:</strong>
+                    <span class="assignee-display">
+                      <mat-icon>person</mat-icon>
+                      {{ taskForm.get('assignee')?.value }}
+                    </span>
+                  </div>
+                }
+                
+                @if (taskForm.get('estimatedHours')?.value) {
+                  <div class="review-item">
+                    <strong>Estimated Hours:</strong>
+                    <span class="hours-display">
+                      <mat-icon>schedule</mat-icon>
+                      {{ taskForm.get('estimatedHours')?.value }}h
+                    </span>
+                  </div>
+                }
+                
+                @if (tagPreview().length > 0) {
+                  <div class="review-item">
+                    <strong>Tags:</strong>
+                    <div class="tags-display">
+                      @for (tag of tagPreview(); track tag) {
+                        <mat-chip class="review-tag">{{ tag }}</mat-chip>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+
+              @if (isEditMode()) {
+                <div class="version-info">
+                  <mat-icon>info</mat-icon>
+                  <small>Version: {{ currentTask()?.version || 'Unknown' }} (Optimistic Locking)</small>
+                </div>
+              }
+            </div>
+
+            <div class="step-actions">
+              <button mat-stroked-button matStepperPrevious type="button">
+                <mat-icon>arrow_back</mat-icon>
+                Back
+              </button>
+              <button mat-raised-button 
+                      color="primary" 
+                      type="submit"
+                      [disabled]="taskForm.invalid || isSubmitting()">
+                @if (isSubmitting()) {
+                  <mat-spinner diameter="20"></mat-spinner>
+                } @else {
+                  <mat-icon>{{ isEditMode() ? 'save' : 'add_task' }}</mat-icon>
+                }
+                {{ isEditMode() ? 'Update Task' : 'Create Task' }}
+              </button>
+            </div>
+          </mat-step>
+        </mat-stepper>
+      </form>
+    </mat-card>
+  }
+
+  <!-- Action Bar -->
+  <div class="action-bar">
+    <button mat-stroked-button 
+            routerLink="/tasks"
+            type="button">
+      <mat-icon>arrow_back</mat-icon>
+      Back to Tasks
+    </button>
+    
+    @if (isEditMode()) {
+      <button mat-stroked-button 
+              color="warn"
+              (click)="confirmDelete()"
+              [disabled]="isSubmitting()">
+        <mat-icon>delete</mat-icon>
+        Delete Task
+      </button>
+    }
+  </div>
+
+  <!-- Error Display -->
+  @if (errorMessage()) {
+    <mat-card class="error-card">
+      <mat-card-content>
+        <div class="error-content">
+          <mat-icon color="warn">error</mat-icon>
+          <h3>Error</h3>
+          <p>{{ errorMessage() }}</p>
+          <button mat-raised-button color="primary" (click)="clearError()">
+            Dismiss
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  }
+</div>

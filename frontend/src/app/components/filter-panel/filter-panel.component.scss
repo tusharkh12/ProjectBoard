@@ -1,0 +1,378 @@
+:host {
+  display: block;
+  max-height: 70vh;
+  overflow: hidden;
+}
+
+/* 🎨 Enhanced Jira-Level Container */
+.jira-dropdown-container {
+  background: var(--surface);
+  border-radius: 8px;
+  border: 1px solid var(--border-light);
+  box-shadow: 0 8px 32px rgba(0,0,0,.12), 0 2px 8px rgba(0,0,0,.08);
+  padding: 0;
+  width: 420px;
+  max-width: 90vw;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  overflow: hidden;
+}
+
+/* ✨ Professional Header with Gradient */
+.dropdown-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-light);
+  background: linear-gradient(135deg, var(--surface-secondary) 0%, var(--surface-elevated) 100%);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-icon {
+  color: var(--yt-blue);
+  font-size: 18px !important;
+  width: 18px !important;
+  height: 18px !important;
+}
+
+.filters-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.clear-all-btn {
+  min-width: auto;
+  height: 32px;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-light);
+  background: var(--surface);
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.clear-all-btn:hover:not([disabled]) {
+  background: var(--yt-blue);
+  color: white;
+  border-color: var(--yt-blue);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+}
+
+.clear-all-btn[disabled] {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.clear-all-btn mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  margin-right: 4px;
+}
+
+/* 📋 Spacious Filter Sections */
+.filter-section {
+  padding: 20px;
+  border-bottom: 1px solid var(--surface-elevated);
+}
+
+.filter-section:last-of-type {
+  border-bottom: none;
+}
+
+/* 🏷️ Enhanced Section Headers */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-icon {
+  font-size: 16px !important;
+  width: 16px !important;
+  height: 16px !important;
+  color: var(--yt-blue);
+}
+
+.section-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.selection-count {
+  background: var(--yt-blue);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  min-width: 18px;
+  text-align: center;
+}
+
+/* 🎯 Enhanced Chip Design */
+.status-chips,
+.priority-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.enhanced-chip {
+  border: 1.5px solid var(--border-light);
+  background: var(--surface);
+  border-radius: 8px;
+  padding: 0;
+  min-height: 36px;
+  transition: all 0.25s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.enhanced-chip:hover {
+  border-color: var(--yt-blue);
+  background: var(--yt-blue-light);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 102, 204, 0.15);
+}
+
+.enhanced-chip.active {
+  border-color: var(--yt-blue);
+  background: var(--yt-blue);
+  color: white;
+  box-shadow: 0 4px 16px rgba(0, 102, 204, 0.3);
+}
+
+.chip-content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  position: relative;
+}
+
+.chip-text {
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.check-icon {
+  font-size: 14px !important;
+  width: 14px !important;
+  height: 14px !important;
+  margin-left: 4px;
+  opacity: 0.9;
+}
+
+/* 🔴 Enhanced Status Indicators */
+.status-indicator {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
+  flex-shrink: 0;
+}
+
+.status-indicator.dot-backlog { background: var(--status-open); }
+.status-indicator.dot-in_progress { background: var(--status-progress); }
+.status-indicator.dot-review { background: var(--status-review); }
+.status-indicator.dot-testing { background: var(--status-testing); }
+.status-indicator.dot-done { background: var(--status-done); }
+
+/* 🚩 Enhanced Priority Icons */
+.priority-icon {
+  font-size: 16px !important;
+  width: 16px !important;
+  height: 16px !important;
+  flex-shrink: 0;
+}
+
+.priority-icon.priority-critical { color: var(--priority-critical); }
+.priority-icon.priority-high { color: var(--priority-high); }
+.priority-icon.priority-medium { color: var(--priority-medium); }
+.priority-icon.priority-low { color: var(--priority-low); }
+
+.enhanced-chip.active .priority-icon,
+.enhanced-chip.active .status-indicator {
+  filter: brightness(1.2);
+}
+
+/* ⚡ Professional Bottom Controls */
+.bottom-controls {
+  padding: 16px 20px;
+  background: var(--surface-secondary);
+  border-top: 1px solid var(--border-light);
+  display: flex;
+  gap: 24px;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.control-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.control-icon {
+  font-size: 14px !important;
+  width: 14px !important;
+  height: 14px !important;
+  color: var(--yt-blue);
+}
+
+.control-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* 📊 Enhanced Sort Controls */
+.sort-controls {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.enhanced-select {
+  flex: 1;
+  border: 1.5px solid var(--border-light);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 12px;
+  background: var(--surface);
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+}
+
+.enhanced-select:focus {
+  outline: none;
+  border-color: var(--yt-blue);
+  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+.direction-toggle {
+  background: var(--surface);
+  border: 1.5px solid var(--border-light);
+  border-radius: 6px;
+  padding: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.direction-toggle:hover {
+  border-color: var(--yt-blue);
+  background: var(--yt-blue-light);
+}
+
+.direction-toggle.active {
+  border-color: var(--yt-blue);
+  background: var(--yt-blue);
+}
+
+.direction-toggle mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  color: var(--text-secondary);
+}
+
+.direction-toggle.active mat-icon {
+  color: white;
+}
+
+/* 👁️ Professional View Toggle */
+.view-toggle-group {
+  display: flex;
+  border: 1.5px solid var(--border-light);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.view-toggle-btn {
+  background: var(--surface);
+  border: none;
+  border-right: 1px solid var(--border-light);
+  padding: 8px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex: 1;
+}
+
+.view-toggle-btn:last-child {
+  border-right: none;
+}
+
+.view-toggle-btn:hover {
+  background: var(--yt-blue-light);
+}
+
+.view-toggle-btn.active {
+  background: var(--yt-blue);
+}
+
+.view-toggle-btn mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  color: var(--text-secondary);
+}
+
+.view-toggle-btn.active mat-icon {
+  color: white;
+}
+
+/* 📱 Responsive Design */
+@media (max-width: 480px) {
+  .jira-dropdown-container {
+    width: 360px;
+  }
+
+  .bottom-controls {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .status-chips,
+  .priority-chips {
+    gap: 6px;
+  }
+}

@@ -1,0 +1,396 @@
+<div class="youtrack-issues">
+  <!--  Issues Header -->
+  <div class="yt-issues-header">
+    
+
+    <!-- -Style Single Filter Bar -->
+    <div class="jira-search-section">
+      <div class="jira-filter-bar">
+        <!-- Professional Search -->
+        <div class="jira-search-container">
+          <mat-icon class="search-icon">search</mat-icon>
+          <input 
+            type="text" 
+            placeholder="Search issues by summary, description, or ID..." 
+            [value]="filterForm.get('searchTerm')?.value || ''" 
+            (input)="updateSearch($event)"
+            class="search-field">
+          @if (filterForm.get('searchTerm')?.value) {
+            <button type="button" (click)="clearSearch()" class="clear-search-btn">
+              <mat-icon>close</mat-icon>
+            </button>
+          }
+        </div>
+
+        <!-- Assignee Avatars -->
+        <div class="assignee-filter">
+          <div class="assignee-avatars">
+            @for (assignee of getVisibleAssignees(); track assignee; let i = $index) {
+              <div class="assignee-avatar"
+                   [class.active]="isAssigneeSelected(assignee)"
+                   [title]="assignee + (isAssigneeSelected(assignee) ? ' (selected)' : ' (click to filter)')"
+                   (click)="toggleAssigneeSelection(assignee, !isAssigneeSelected(assignee))">
+                {{ assignee.charAt(0).toUpperCase() }}
+<!--                @if (isAssigneeSelected(assignee)) {-->
+<!--                  <div class="selection-indicator">-->
+<!--                    <mat-icon>check</mat-icon>-->
+<!--                  </div>-->
+<!--                }-->
+              </div>
+            }
+            @if (getHiddenAssigneesCount() > 0) {
+              <div class="assignee-overflow"
+                   [matMenuTriggerFor]="assigneeMenu"
+                   [title]="getHiddenAssigneesCount() + ' more assignees'">
+                +{{ getHiddenAssigneesCount() }}
+              </div>
+            }
+          </div>
+        </div>
+
+
+          <!-- Single Consolidated Filter -->
+          <button mat-stroked-button class="consolidated-filter" (click)="openFilterPanel()"
+                  [attr.aria-label]="'Filter and sort options'">
+              <mat-icon>tune</mat-icon>
+              <span>Filter</span>
+              @if (hasActiveFilters()) {
+                  <span class="filter-count">{{ getActiveFilterCount() }}</span>
+              }
+              <mat-icon class="dropdown-arrow">arrow_drop_down</mat-icon>
+          </button>
+
+
+      <!-- Assignee Menu -->
+      <mat-menu #assigneeMenu="matMenu" class="jira-dropdown-menu">
+        <div class="dropdown-header-container">
+          <span class="dropdown-header">Assignee</span>
+        </div>
+        @for (assignee of getHiddenAssignees(); track assignee) {
+          <mat-checkbox
+              class="dropdown-option"
+              [checked]="isAssigneeSelected(assignee)"
+              (change)="toggleAssigneeSelection(assignee, $event.checked)"
+              (click)="$event.stopPropagation()">
+            <div class="option-content">
+              <div class="option-avatar">{{ assignee.charAt(0).toUpperCase() }}</div>
+              <span>{{ assignee }}</span>
+            </div>
+          </mat-checkbox>
+        }
+      </mat-menu>
+
+      <!-- Status Menu -->
+      <mat-menu #statusMenu="matMenu" class="jira-dropdown-menu">
+        <div class="dropdown-header-container">
+          <span class="dropdown-header">Status</span>
+        </div>
+        @for (status of availableStatuses(); track status.value) {
+          <mat-checkbox 
+            class="dropdown-option"
+            [checked]="isStatusSelected(status.value)"
+            (change)="toggleStatusSelection(status.value, $event.checked)"
+            (click)="$event.stopPropagation()">
+            <div class="option-content">
+              <div class="status-dot" [class]="'dot-' + status.value.toLowerCase()"></div>
+              <span>{{ status.label }}</span>
+            </div>
+          </mat-checkbox>
+        }
+      </mat-menu>
+
+      <!-- Priority Menu -->
+      <mat-menu #priorityMenu="matMenu" class="jira-dropdown-menu">
+        <div class="dropdown-header-container">
+          <span class="dropdown-header">Priority</span>
+        </div>
+        @for (priority of availablePriorities(); track priority.value) {
+          <mat-checkbox 
+            class="dropdown-option"
+            [checked]="isPrioritySelected(priority.value)"
+            (change)="togglePrioritySelection(priority.value, $event.checked)"
+            (click)="$event.stopPropagation()">
+            <div class="option-content">
+              <mat-icon class="priority-icon" [class]="'priority-' + priority.value.toLowerCase()">
+                {{ getPriorityIcon(priority.value) }}
+              </mat-icon>
+              <span>{{ priority.label }}</span>
+            </div>
+          </mat-checkbox>
+        }
+      </mat-menu>
+
+      <!-- Type Menu -->
+      <mat-menu #typeMenu="matMenu" class="jira-dropdown-menu">
+        <div class="dropdown-header">Type</div>
+        <mat-checkbox class="dropdown-option" [checked]="isTypeSelected('bug')" (change)="toggleTypeSelection('bug', $event.checked)">
+          <div class="option-content">
+            <mat-icon class="type-icon bug-icon">bug_report</mat-icon>
+            <span>Bug</span>
+          </div>
+        </mat-checkbox>
+        <mat-checkbox class="dropdown-option" [checked]="isTypeSelected('story')" (change)="toggleTypeSelection('story', $event.checked)">
+          <div class="option-content">
+            <mat-icon class="type-icon story-icon">arrow_upward</mat-icon>
+            <span>Story</span>
+          </div>
+        </mat-checkbox>
+        <mat-checkbox class="dropdown-option" [checked]="isTypeSelected('task')" (change)="toggleTypeSelection('task', $event.checked)">
+          <div class="option-content">
+            <mat-icon class="type-icon task-icon">check_box</mat-icon>
+            <span>Task</span>
+          </div>
+        </mat-checkbox>
+        <mat-checkbox class="dropdown-option" [checked]="isTypeSelected('subtask')" (change)="toggleTypeSelection('subtask', $event.checked)">
+          <div class="option-content">
+            <mat-icon class="type-icon subtask-icon">subdirectory_arrow_right</mat-icon>
+            <span>Sub-task</span>
+          </div>
+        </mat-checkbox>
+      </mat-menu>
+    </div>
+    
+
+  
+  </div>
+
+
+
+  <!-- Loading State -->
+  @if (taskService.loading()) {
+    <div class="yt-loading-container">
+      <mat-spinner diameter="32"></mat-spinner>
+      <p>Loading issues...</p>
+    </div>
+  } @else {
+
+    <!-- Issues Content -->
+    <div class="yt-issues-content" [class]="'yt-view-' + viewMode()">
+      @if (sortedAndFilteredTasks().length === 0) {
+        <!-- Empty State -->
+        <div class="yt-empty-state">
+          @if (hasActiveFilters()) {
+            <div class="yt-empty-icon">
+              <mat-icon>search_off</mat-icon>
+            </div>
+            <h3>No issues match your filters</h3>
+            <p>Try adjusting your search criteria or clearing filters.</p>
+            <button mat-raised-button color="primary" (click)="clearAllFilters()">
+              <mat-icon>filter_alt_off</mat-icon>
+              Clear All Filters
+            </button>
+          } @else {
+            <div class="yt-empty-icon">
+              <mat-icon>assignment</mat-icon>
+            </div>
+            <h3>No issues yet</h3>
+            <p>Create your first issue to get started with project management.</p>
+            <button mat-raised-button color="primary" (click)="openCreateTaskModal()">
+              <mat-icon>add</mat-icon>
+              Create First Issue
+            </button>
+          }
+        </div>
+      } @else {
+
+        <!-- Select All Controls -->
+        <div class="yt-select-controls">
+          <mat-checkbox 
+            [checked]="isAllSelected()" 
+            [indeterminate]="isSomeSelected()" 
+            (change)="toggleSelectAll($event.checked || false)">
+            {{ selectedIssues().length > 0 ? selectedIssues().length + ' selected' : 'Select all' }}
+          </mat-checkbox>
+          <span class="yt-results-count">Showing {{ sortedAndFilteredTasks().length }} of {{ taskService.taskCount() }} issues</span>
+        </div>
+        @if (selectedIssues().length > 0) {
+          <mat-divider vertical></mat-divider>
+<!--              <button mat-button (click)="bulkUpdateStatus()" class="yt-bulk-action">-->
+<!--                <mat-icon>edit</mat-icon>-->
+<!--                Update Status ({{ selectedIssues().length }})-->
+<!--              </button>-->
+          <button mat-button (click)="bulkDelete()" class="yt-bulk-action yt-danger">
+            <mat-icon>delete</mat-icon>
+            Delete ({{ selectedIssues().length }})
+          </button>
+        }
+        
+
+        <!-- Issues List -->
+        <div class="yt-issues-list">
+          @for (task of sortedAndFilteredTasks(); track task.id) {
+            <div class="yt-issue-item" 
+                 [class.selected]="isSelected(task)" 
+                 [class.overdue]="isTaskOverdue(task)"
+                 (click)="selectIssue(task, $event)">
+              
+              <!-- Selection Checkbox -->
+              <div class="yt-issue-checkbox">
+                <mat-checkbox 
+                  [checked]="isSelected(task)" 
+                  (change)="toggleSelection(task, $event.checked || false)"
+                  (click)="$event.stopPropagation()">
+                </mat-checkbox>
+              </div>
+
+              <!-- Priority Indicator -->
+              <div class="yt-issue-priority">
+                <div class="yt-priority-badge" 
+                     [class]="'yt-priority-' + task.priority.toLowerCase()"
+                     [title]="getPriorityLabel(task.priority)">
+                  <mat-icon>{{ getPriorityIcon(task.priority) }}</mat-icon>
+                </div>
+              </div>
+
+              <!-- Issue Content -->
+              <div class="yt-issue-content">
+                <!-- Issue Header -->
+                <div class="yt-issue-header">
+                  <div class="yt-issue-id-summary">
+                    <span class="yt-issue-id">{{ IssueUtils.generateIssueId(task.id || 0) }}</span>
+                    <h3 class="yt-issue-summary" (click)="openTaskEditor(task)" role="button" tabindex="0" 
+                       [attr.aria-label]="'Click to view details for ' + task.title">{{ task.title }}</h3>
+                  </div>
+                  <div class="yt-issue-status">
+                    <div class="yt-status-badge" [class]="'yt-status-' + task.status.toLowerCase()">
+                      {{ getStatusLabel(task.status) }}
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Issue Description (for detailed view) -->
+                @if (viewMode() !== 'compact' && task.description) {
+                  <div class="yt-issue-description">
+                    {{ task.description.length > 120 ? (task.description | slice:0:120) + '...' : task.description }}
+                  </div>
+                }
+
+                <!-- Issue Tags (hide in compact view) -->
+                @if (viewMode() !== 'compact' && task.tags && getTaskTags(task.tags).length > 0) {
+                  <div class="yt-issue-tags">
+                    @for (tag of getTaskTags(task.tags); track tag) {
+                      <span class="yt-tag">{{ tag }}</span>
+                    }
+                  </div>
+                }
+
+                <!-- Issue Footer (hide metadata in compact view) -->
+                @if (viewMode() !== 'compact') {
+                  <div class="yt-issue-footer">
+                    <div class="yt-issue-metadata">
+                      @if (task.assignee) {
+                        <div class="yt-assignee">
+                          <div class="yt-avatar-xs">{{ task.assignee.charAt(0).toUpperCase() }}</div>
+                          <span class="yt-assignee-name">{{ task.assignee }}</span>
+                        </div>
+                      } @else {
+                        <div class="yt-unassigned">
+                          <mat-icon>person_outline</mat-icon>
+                          <span>Unassigned</span>
+                        </div>
+                      }
+
+                      @if (task.estimatedHours) {
+                        <div class="yt-time-estimate">
+                          <mat-icon>schedule</mat-icon>
+                          <span>{{ task.estimatedHours }}h</span>
+                        </div>
+                      }
+
+                      @if (isTaskOverdue(task)) {
+                        <div class="yt-overdue-indicator">
+                          <mat-icon>warning</mat-icon>
+                          <span>Overdue</span>
+                        </div>
+                      }
+                    </div>
+
+                    <div class="yt-issue-actions">
+                      <div class="yt-issue-timestamps">
+                        @if (task.updatedAt) {
+                          <span class="yt-updated">Updated {{ formatRelativeTime(task.updatedAt) }}</span>
+                        } @else if (task.createdAt) {
+                          <span class="yt-created">Created {{ formatRelativeTime(task.createdAt) }}</span>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                } @else {
+                  <!-- Compact view footer - only essential info -->
+                  <div class="yt-issue-footer-compact">
+                    @if (task.assignee) {
+                      <div class="yt-assignee-compact">
+                        <div class="yt-avatar-xs">{{ task.assignee.charAt(0).toUpperCase() }}</div>
+                      </div>
+                    }
+                    @if (task.updatedAt) {
+                      <span class="yt-updated-compact">{{ formatRelativeTime(task.updatedAt) }}</span>
+                    }
+                  </div>
+                }
+              </div>
+
+              <!-- Action Menu -->
+              <div class="yt-issue-actions">
+                <button mat-icon-button [matMenuTriggerFor]="issueMenu" (click)="$event.stopPropagation()" class="yt-action-menu">
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+
+                    <mat-menu #issueMenu="matMenu">
+                      <button mat-menu-item [routerLink]="['/tasks', task.id, 'edit']">
+                        <mat-icon>edit</mat-icon>
+                        Edit Issue
+                      </button>
+                      <button mat-menu-item (click)="duplicateIssue(task)">
+                        <mat-icon>content_copy</mat-icon>
+                        Duplicate
+                      </button>
+                      <mat-divider></mat-divider>
+                      <button mat-menu-item (click)="changeStatus(task, TaskStatus.BACKLOG)" [disabled]="task.status === TaskStatus.BACKLOG">
+                        <mat-icon>radio_button_unchecked</mat-icon>
+                        Move to Backlog
+                      </button>
+                      <button mat-menu-item (click)="changeStatus(task, TaskStatus.IN_PROGRESS)" [disabled]="task.status === TaskStatus.IN_PROGRESS">
+                        <mat-icon>play_arrow</mat-icon>
+                        Start Progress
+                      </button>
+                      <button mat-menu-item (click)="changeStatus(task, TaskStatus.DONE)" [disabled]="task.status === TaskStatus.DONE">
+                        <mat-icon>check_circle</mat-icon>
+                        Mark Done
+                      </button>
+                      <mat-divider></mat-divider>
+                      <button mat-menu-item (click)="deleteIssue(task)" class="yt-danger-item">
+                        <mat-icon>delete</mat-icon>
+                        Delete Issue
+                      </button>
+                    </mat-menu>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Error State -->
+  @if (taskService.error()) {
+    <div class="yt-error-state">
+      <mat-icon class="yt-error-icon">error_outline</mat-icon>
+      <h3>Failed to load issues</h3>
+      <p>{{ taskService.error() }}</p>
+      <button mat-raised-button color="primary" (click)="refreshIssues()">
+        <mat-icon>refresh</mat-icon>
+        Try Again
+      </button>
+    </div>
+  }
+
+  <!-- Task Panel -->
+  @if (isPanelOpen()) {
+    <app-task-panel 
+      [taskId]="selectedTaskId()!" 
+      [isOpen]="isPanelOpen()"
+      (closePanel)="closeTaskPanel()">
+    </app-task-panel>
+  }
+</div>

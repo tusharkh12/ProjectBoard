@@ -1,0 +1,300 @@
+    <div class="task-panel-overlay" (click)="closeTaskPanel()" (keydown.escape)="closeTaskPanel()" tabindex="0" role="dialog" aria-label="Task details panel">
+      <div class="task-panel" (click)="$event.stopPropagation()">
+        <!-- Panel Header -->
+        <div class="panel-header">
+          <div class="header-left">
+            @if (task()) {
+              <div class="issue-id">{{ IssueUtils.generateIssueId(task()!.id || 0) }}</div>
+              <div class="priority-indicator" 
+                   [class]="'priority-' + task()!.priority.toLowerCase()"
+                   [title]="getPriorityDisplay(task()!.priority)">
+                <mat-icon>{{ getPriorityIcon(task()!.priority) }}</mat-icon>
+              </div>
+            }
+          </div>
+          
+                             <div class="header-actions">
+                     @if (task()) {
+                       @if (isEditing()) {
+                         <button mat-raised-button color="primary" (click)="saveChanges()" 
+                                 [disabled]="!editForm.valid || saving()">
+                           <mat-icon>save</mat-icon>
+                           Save
+                         </button>
+                         <button mat-stroked-button (click)="toggleEditMode()" 
+                                 [disabled]="saving()">
+                           <mat-icon>close</mat-icon>
+                           Cancel
+                         </button>
+                       } @else {
+                         <button mat-stroked-button (click)="toggleEditMode()" 
+                                 matTooltip="Edit task">
+                           <mat-icon>edit</mat-icon>
+                           Edit
+                         </button>
+                         <button mat-icon-button [matMenuTriggerFor]="moreMenu" matTooltip="More actions">
+                           <mat-icon>more_vert</mat-icon>
+                         </button>
+                         
+                         <mat-menu #moreMenu="matMenu">
+                           <button mat-menu-item (click)="duplicateTask()">
+                             <mat-icon>content_copy</mat-icon>
+                             Duplicate
+                           </button>
+                           <button mat-menu-item routerLink="/board">
+                             <mat-icon>view_kanban</mat-icon>
+                             Open in Board
+                           </button>
+                           <mat-divider></mat-divider>
+                           <button mat-menu-item (click)="deleteTask()" class="delete-action">
+                             <mat-icon>delete</mat-icon>
+                             Delete
+                           </button>
+                         </mat-menu>
+                       }
+                     }
+                     
+                     <button mat-icon-button (click)="closeTaskPanel()" matTooltip="Close panel">
+                       <mat-icon>close</mat-icon>
+                     </button>
+                   </div>
+        </div>
+
+        <!-- Panel Content -->
+        <div class="panel-content">
+          @if (loading()) {
+            <div class="loading-state">
+              <mat-spinner diameter="40"></mat-spinner>
+              <p>Loading task details...</p>
+            </div>
+          } @else if (error()) {
+            <div class="error-state">
+              <mat-icon class="error-icon">error_outline</mat-icon>
+              <h3>Error Loading Task</h3>
+              <p>{{ error() }}</p>
+              <button mat-raised-button color="primary" (click)="loadTaskData()">
+                <mat-icon>refresh</mat-icon>
+                Try Again
+              </button>
+            </div>
+          } @else if (task()) {
+            
+            <!-- Task Title Section -->
+            <div class="task-title-section">
+              @if (isEditing()) {
+                <mat-form-field appearance="outline" class="title-field">
+                  <mat-label>Title</mat-label>
+                  <input matInput formControlName="title" placeholder="Enter task title">
+                  <mat-error *ngIf="editForm.get('title')?.hasError('required')">
+                    Title is required
+                  </mat-error>
+                </mat-form-field>
+              } @else {
+                <h1 class="task-title">{{ task()!.title }}</h1>
+              }
+              
+              <div class="status-chip" [class]="'status-' + task()!.status.toLowerCase()">
+                <mat-icon>{{ getStatusIcon(task()!.status) }}</mat-icon>
+                {{ getStatusDisplay(task()!.status) }}
+              </div>
+            </div>
+
+            <!-- Metadata Grid -->
+            <div class="task-metadata">
+              <div class="metadata-grid">
+                <!-- Priority -->
+                <div class="metadata-item">
+                  <label for="priority-field">Priority</label>
+                  @if (isEditing()) {
+                                          <mat-form-field appearance="outline" class="priority-field">
+                        <mat-label>Priority</mat-label>
+                        <mat-select formControlName="priority" id="priority-field">
+                        @for (priority of priorityOptions(); track priority.value) {
+                          <mat-option [value]="priority.value">
+                            <div class="priority-option">
+                              <mat-icon class="priority-icon" [class]="'priority-' + priority.value.toLowerCase()">
+                                {{ getPriorityIcon(priority.value) }}
+                              </mat-icon>
+                              <span>{{ priority.label }}</span>
+                            </div>
+                          </mat-option>
+                        }
+                      </mat-select>
+                    </mat-form-field>
+                  } @else {
+                    <div class="priority-badge" [class]="'priority-' + task()!.priority.toLowerCase()">
+                      <mat-icon>{{ getPriorityIcon(task()!.priority) }}</mat-icon>
+                      {{ getPriorityDisplay(task()!.priority) }}
+                    </div>
+                  }
+                </div>
+                
+                <!-- Assignee -->
+                <div class="metadata-item">
+                  <label for="assignee-field">Assignee</label>
+                  @if (isEditing()) {
+                                          <mat-form-field appearance="outline" class="assignee-field">
+                        <mat-label>Assignee</mat-label>
+                        <input matInput formControlName="assignee" id="assignee-field" placeholder="Enter assignee name">
+                    </mat-form-field>
+                  } @else {
+                    @if (task()!.assignee) {
+                      <div class="assignee-info">
+                        <div class="avatar">{{ task()!.assignee!.charAt(0).toUpperCase() }}</div>
+                        <span>{{ task()!.assignee }}</span>
+                      </div>
+                    } @else {
+                      <div class="unassigned">
+                        <mat-icon>person_outline</mat-icon>
+                        <span>Unassigned</span>
+                      </div>
+                    }
+                  }
+                </div>
+                
+                <!-- Estimated Hours -->
+                <div class="metadata-item">
+                  <label for="hours-field">Estimated Hours</label>
+                  @if (isEditing()) {
+                                          <mat-form-field appearance="outline" class="hours-field">
+                        <mat-label>Hours</mat-label>
+                        <input matInput type="number" formControlName="estimatedHours" id="hours-field" placeholder="0">
+                      <mat-icon matSuffix>schedule</mat-icon>
+                    </mat-form-field>
+                  } @else {
+                    @if (task()!.estimatedHours) {
+                      <div class="estimate-info">
+                        <mat-icon>schedule</mat-icon>
+                        <span>{{ task()!.estimatedHours }}h</span>
+                      </div>
+                    } @else {
+                      <span class="no-estimate">No estimate</span>
+                    }
+                  }
+                </div>
+                
+                <!-- Status -->
+                <div class="metadata-item">
+                  <label for="status-field">Status</label>
+                  @if (isEditing()) {
+                                          <mat-form-field appearance="outline" class="status-field">
+                        <mat-label>Status</mat-label>
+                        <mat-select formControlName="status" id="status-field">
+                        @for (status of statusOptions(); track status.value) {
+                          <mat-option [value]="status.value">
+                            <div class="status-option">
+                              <div class="status-dot" [class]="'dot-' + status.value.toLowerCase()"></div>
+                              <span>{{ status.label }}</span>
+                            </div>
+                          </mat-option>
+                        }
+                      </mat-select>
+                    </mat-form-field>
+                  } @else {
+                    <div class="status-badge" [class]="'status-' + task()!.status.toLowerCase()">
+                      {{ getStatusDisplay(task()!.status) }}
+                    </div>
+                  }
+                </div>
+                
+                <!-- Created Date -->
+                @if (task()!.createdAt) {
+                  <div class="metadata-item">
+                    <label for="created-date">Created</label>
+                    <span class="date-info" id="created-date">{{ formatDate(task()!.createdAt!) }}</span>
+                  </div>
+                }
+                
+                <!-- Updated Date -->
+                @if (task()!.updatedAt) {
+                  <div class="metadata-item">
+                    <label for="updated-date">Updated</label>
+                    <span class="date-info" id="updated-date">{{ formatDate(task()!.updatedAt!) }}</span>
+                  </div>
+                }
+                
+                <!-- Version -->
+                @if (task()!.version) {
+                  <div class="metadata-item">
+                    <label for="version-info">Version</label>
+                    <span class="version-info" id="version-info">{{ task()!.version }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+
+            <!-- Description -->
+            <div class="task-description-section">
+              <h3>Description</h3>
+              @if (isEditing()) {
+                <mat-form-field appearance="outline" class="description-field">
+                  <mat-label>Description</mat-label>
+                  <textarea matInput formControlName="description" 
+                           placeholder="Enter task description" 
+                           rows="6"></textarea>
+                </mat-form-field>
+              } @else {
+                @if (task()!.description) {
+                  <div class="description-content">
+                    {{ task()!.description }}
+                  </div>
+                } @else {
+                  <div class="no-description">
+                    <mat-icon>description</mat-icon>
+                    <span>No description provided</span>
+                  </div>
+                }
+              }
+            </div>
+
+            <!-- Tags -->
+            <div class="task-tags-section">
+              <h3>Tags</h3>
+              @if (isEditing()) {
+                <mat-form-field appearance="outline" class="tags-field">
+                  <mat-label>Tags (comma-separated)</mat-label>
+                  <input matInput formControlName="tags" 
+                         placeholder="Enter tags separated by commas">
+                </mat-form-field>
+              } @else {
+                @if (getTaskTags().length > 0) {
+                  <div class="tags-container">
+                    @for (tag of getTaskTags(); track tag) {
+                      <mat-chip class="tag-chip">{{ tag }}</mat-chip>
+                    }
+                  </div>
+                } @else {
+                  <div class="no-tags">
+                    <mat-icon>label</mat-icon>
+                    <span>No tags</span>
+                  </div>
+                }
+              }
+            </div>
+
+            <!-- Additional Info -->
+            <div class="additional-info">
+              <h3>Additional Information</h3>
+              <div class="info-grid">
+                <div class="info-item">
+                  <mat-icon>link</mat-icon>
+                  <span>0 related issues</span>
+                </div>
+                <div class="info-item">
+                  <mat-icon>comment</mat-icon>
+                  <span>0 comments</span>
+                </div>
+                <div class="info-item">
+                  <mat-icon>attach_file</mat-icon>
+                  <span>0 attachments</span>
+                </div>
+                <div class="info-item">
+                  <mat-icon>history</mat-icon>
+                  <span>{{ getActivityCount() }} activities</span>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
