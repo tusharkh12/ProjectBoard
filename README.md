@@ -146,14 +146,43 @@ npm run lint           # Code linting
 
 ---
 
-### Frontend Pages
-- **Dashboard** (`/dashboard`) - Project overview with task statistics
-  ![Dashboard](frontend/docs/screenshots/dashboard.png)
+## Application Screenshots
 
-- **Task List** (`/tasks`) - Comprehensive task management with filtering
-  ![Task List](frontend/docs/screenshots/tasks-list-view.png)
+### Main Application Pages
 
-- **Sprint Board** (`/board`) - Kanban interface with drag-and-drop
-  ![Sprint Board](frontend/docs/screenshots/sprint-board.png)
+#### Dashboard
+Project overview with task statistics, health metrics, and recent activity
+![Dashboard](frontend/docs/screenshots/dashboard.png)
+
+#### Task List View
+Comprehensive task management with filtering, sorting, and bulk operations
+![Task List](frontend/docs/screenshots/tasks-list-view.png)
+
+#### Sprint Board (Kanban)
+Drag-and-drop kanban interface with status columns and real-time updates
+![Sprint Board](frontend/docs/screenshots/sprint-board.png)
+
+### Task Management Features
+
+#### Task Creation & Editing
+Professional task editor with rich form validation and Material Design components
+![Task Editor](frontend/docs/screenshots/task/task-edit-create.png)
+
+#### Conflict Resolution System
+Advanced optimistic locking with conflict detection and resolution options
+
+**Conflict Detection**: When concurrent edits are detected, users are notified immediately
+![Conflict Popup](frontend/docs/screenshots/task/conflict-popup.png)
+
+**Merge Interface**: Intelligent merge tool for resolving conflicts between versions
+![Merge Conflict](frontend/docs/screenshots/task/merge-conflict.png)
+
+## Key Features Demonstrated
+
+- ✅ **Professional UI/UX**: Modern Material Design with dark mode support
+- ✅ **Conflict Resolution**: Optimistic locking prevents data loss in multi-user environments
+- ✅ **Real-time Updates**: Live status changes and progress tracking
+- ✅ **Responsive Design**: Consistent experience across all device sizes
+- ✅ **Data Integrity**: Version control and conflict management for collaborative editing
 
 Built with modern web technologies for efficient task management and team collaboration.
