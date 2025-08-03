@@ -1,0 +1,364 @@
+<div class="executive-dashboard">
+  <!-- Dashboard Header -->
+  <div class="dashboard-header">
+    <div class="header-content">
+      <h1 class="dashboard-title">📊 Project Dashboard</h1>
+      <p class="dashboard-subtitle">Real-time insights and project metrics</p>
+    </div>
+    <div class="header-actions">
+      <button mat-stroked-button (click)="refreshDashboard()" [disabled]="loading()">
+        <mat-icon>refresh</mat-icon>
+        Refresh
+      </button>
+      <button mat-raised-button color="primary" (click)="openCreateTaskModal()">
+        <mat-icon>add</mat-icon>
+                        New Task
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (loading()) {
+    <div class="loading-state">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Loading dashboard metrics...</p>
+    </div>
+  } @else {
+
+    <!-- Executive KPI Row -->
+    <div class="kpi-grid">
+      <div class="kpi-card total-tasks">
+        <div class="kpi-content">
+          <div class="kpi-icon">
+            <mat-icon>assignment</mat-icon>
+          </div>
+          <div class="kpi-data">
+            <div class="kpi-value">{{ getTotalTasks() }}</div>
+            <div class="kpi-label">Total Tasks</div>
+            <div class="kpi-trend">
+              <mat-icon class="trend-icon">trending_up</mat-icon>
+              <span>{{ getEstimatedHours() }}h estimated</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="kpi-card open-tasks">
+        <div class="kpi-content">
+          <div class="kpi-icon">
+            <mat-icon>radio_button_unchecked</mat-icon>
+          </div>
+          <div class="kpi-data">
+            <div class="kpi-value">{{ getOpenTasks() }}</div>
+            <div class="kpi-label">Open</div>
+            <div class="kpi-progress">
+              <mat-progress-bar mode="determinate" [value]="getOpenPercentage()"></mat-progress-bar>
+              <span>{{ getOpenPercentage() }}%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="kpi-card in-progress-tasks">
+        <div class="kpi-content">
+          <div class="kpi-icon">
+            <mat-icon>schedule</mat-icon>
+          </div>
+          <div class="kpi-data">
+            <div class="kpi-value">{{ getInProgressTasks() }}</div>
+            <div class="kpi-label">In Progress</div>
+            <div class="kpi-progress">
+              <mat-progress-bar mode="determinate" [value]="getInProgressPercentage()"></mat-progress-bar>
+              <span>{{ getInProgressPercentage() }}%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="kpi-card review-tasks">
+        <div class="kpi-content">
+          <div class="kpi-icon">
+            <mat-icon>rate_review</mat-icon>
+          </div>
+          <div class="kpi-data">
+            <div class="kpi-value">{{ getCodeReviewTasks() }}</div>
+            <div class="kpi-label">Code Review</div>
+            <div class="kpi-progress">
+              <mat-progress-bar mode="determinate" [value]="getCodeReviewPercentage()"></mat-progress-bar>
+              <span>{{ getCodeReviewPercentage() }}%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="kpi-card testing-tasks">
+        <div class="kpi-content">
+          <div class="kpi-icon">
+            <mat-icon>bug_report</mat-icon>
+          </div>
+          <div class="kpi-data">
+            <div class="kpi-value">{{ getTestingTasks() }}</div>
+            <div class="kpi-label">To Test</div>
+            <div class="kpi-progress">
+              <mat-progress-bar mode="determinate" [value]="getTestingPercentage()"></mat-progress-bar>
+              <span>{{ getTestingPercentage() }}%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="kpi-card done-tasks">
+        <div class="kpi-content">
+          <div class="kpi-icon">
+            <mat-icon>check_circle</mat-icon>
+          </div>
+          <div class="kpi-data">
+            <div class="kpi-value">{{ getDoneTasks() }}</div>
+            <div class="kpi-label">Done</div>
+            <div class="kpi-progress">
+              <mat-progress-bar mode="determinate" [value]="getCompletionRate()"></mat-progress-bar>
+              <span>{{ getCompletionRate() }}% complete</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts and Analytics Row -->
+    <div class="analytics-grid">
+      
+      <!-- Priority Breakdown Chart -->
+      <mat-card class="chart-card priority-chart">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>flag</mat-icon>
+            Priority Distribution
+          </mat-card-title>
+          <mat-card-subtitle>Task breakdown by priority level</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="priority-chart-content">
+            @for (priority of getPriorityStats(); track priority.name) {
+              <div class="priority-item">
+                <div class="priority-header">
+                  <div class="priority-indicator" [class]="'priority-' + priority.name.toLowerCase()">
+                    <mat-icon>{{ priority.icon }}</mat-icon>
+                  </div>
+                  <div class="priority-info">
+                    <span class="priority-name">{{ priority.displayName }}</span>
+                    <span class="priority-count">{{ priority.count }} tasks</span>
+                  </div>
+                  <div class="priority-percentage">{{ priority.percentage }}%</div>
+                </div>
+                <div class="priority-bar">
+                  <div class="priority-fill" 
+                       [class]="'priority-' + priority.name.toLowerCase()"
+                       [style.width.%]="priority.percentage">
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Team Performance -->
+      <mat-card class="chart-card team-performance">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>people</mat-icon>
+            Team Performance
+          </mat-card-title>
+          <mat-card-subtitle>Tasks assigned by team member</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="team-performance-content">
+            @if (getTeamStats().length > 0) {
+              @for (member of getTeamStats(); track member.name) {
+                <div class="team-member">
+                  <div class="member-info">
+                    <div class="member-avatar">{{ member.name.charAt(0).toUpperCase() }}</div>
+                    <div class="member-details">
+                      <div class="member-name">{{ member.name }}</div>
+                      <div class="member-stats">{{ member.count }} tasks assigned</div>
+                    </div>
+                  </div>
+                  <div class="member-progress">
+                    <mat-progress-bar mode="determinate" [value]="member.percentage"></mat-progress-bar>
+                    <span class="progress-label">{{ member.percentage }}%</span>
+                  </div>
+                </div>
+              }
+            } @else {
+              <div class="empty-state">
+                <mat-icon>people_outline</mat-icon>
+                                  <p>No assigned tasks found</p>
+              <button mat-stroked-button (click)="openCreateTaskModal()">Assign First Task</button>
+              </div>
+            }
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Project Health -->
+      <mat-card class="chart-card project-health">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>health_and_safety</mat-icon>
+            Project Health
+          </mat-card-title>
+          <mat-card-subtitle>Overall project status indicators</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="health-metrics">
+            <div class="health-item">
+              <div class="health-icon completion">
+                <mat-icon>trending_up</mat-icon>
+              </div>
+              <div class="health-info">
+                <div class="health-value">{{ getCompletionRate() }}%</div>
+                <div class="health-label">Completion Rate</div>
+              </div>
+              <div class="health-status" [class]="getHealthStatus('completion')">
+                {{ getHealthLabel('completion') }}
+              </div>
+            </div>
+
+            <div class="health-item">
+              <div class="health-icon velocity">
+                <mat-icon>speed</mat-icon>
+              </div>
+              <div class="health-info">
+                <div class="health-value">{{ getVelocity() }}</div>
+                <div class="health-label">Weekly Velocity</div>
+              </div>
+              <div class="health-status" [class]="getHealthStatus('velocity')">
+                {{ getHealthLabel('velocity') }}
+              </div>
+            </div>
+
+            <div class="health-item">
+              <div class="health-icon bottleneck">
+                <mat-icon>warning</mat-icon>
+              </div>
+              <div class="health-info">
+                <div class="health-value">{{ getBottleneckCount() }}</div>
+                <div class="health-label">Potential Bottlenecks</div>
+              </div>
+              <div class="health-status" [class]="getHealthStatus('bottleneck')">
+                {{ getHealthLabel('bottleneck') }}
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Recent Activity and Quick Actions -->
+    <div class="activity-grid">
+      <!-- Recent Tasks -->
+      <mat-card class="activity-card recent-tasks">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>history</mat-icon>
+            Recent Activity
+          </mat-card-title>
+          <div class="header-actions">
+            <button mat-button routerLink="/tasks">View All</button>
+          </div>
+        </mat-card-header>
+        <mat-card-content>
+          @if (recentTasks().length > 0) {
+            <div class="recent-tasks-list">
+              @for (task of recentTasks(); track task.id) {
+                <div class="recent-task" (click)="openTaskDetail(task)" role="button" tabindex="0" 
+                     [attr.aria-label]="'Click to view details for ' + task.title">
+                  <div class="task-header">
+                    <div class="task-id">{{ this.IssueUtils.generateIssueId(task.id || 0) }}</div>
+                    <div class="priority-badge" [class]="'priority-' + task.priority.toLowerCase()">
+                      <mat-icon>{{ getPriorityIcon(task.priority) }}</mat-icon>
+                    </div>
+                  </div>
+                  <div class="task-title">{{ task.title }}</div>
+                  <div class="task-footer">
+                    <div class="status-chip" [class]="'status-' + task.status.toLowerCase()">
+                      {{ getStatusDisplay(task.status) }}
+                    </div>
+                    @if (task.assignee) {
+                      <div class="assignee-info">
+                        <div class="avatar">{{ task.assignee.charAt(0).toUpperCase() }}</div>
+                        <span>{{ task.assignee }}</span>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="empty-state">
+              <mat-icon>inbox</mat-icon>
+              <p>No recent tasks</p>
+              <button mat-raised-button color="primary" (click)="openCreateTaskModal()">Create First Task</button>
+            </div>
+          }
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Quick Actions -->
+      <mat-card class="activity-card quick-actions">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>flash_on</mat-icon>
+            Quick Actions
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="quick-actions-grid">
+            <button mat-raised-button color="primary" (click)="openCreateTaskModal()" class="action-button primary">
+              <mat-icon>add_task</mat-icon>
+              <span>New Task</span>
+            </button>
+            
+            <button mat-stroked-button routerLink="/board" class="action-button">
+              <mat-icon>view_kanban</mat-icon>
+              <span>Kanban Board</span>
+            </button>
+            
+            <button mat-stroked-button routerLink="/tasks" class="action-button">
+              <mat-icon>list</mat-icon>
+              <span>All Tasks</span>
+            </button>
+            
+            <button mat-stroked-button (click)="refreshDashboard()" class="action-button">
+              <mat-icon>refresh</mat-icon>
+              <span>Refresh Data</span>
+            </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Statistics Summary -->
+    @if (statistics()) {
+      <div class="stats-summary">
+        <div class="stats-info">
+          <mat-icon>info</mat-icon>
+          <span>
+            Dashboard last updated: {{ formatTimestamp(getCurrentTimestamp()) }} • 
+            {{ getTotalTasks() }} total tasks • 
+            {{ getEstimatedHours() }} hours estimated work
+          </span>
+        </div>
+      </div>
+    }
+  }
+
+  <!-- Task Panel -->
+  @if (isPanelOpen()) {
+    <app-task-panel 
+      [taskId]="selectedTaskId()!" 
+      [isOpen]="isPanelOpen()"
+      (closePanel)="closeTaskPanel()">
+    </app-task-panel>
+  }
+</div>
