@@ -1,0 +1,856 @@
+/* Authentic Design System - Angular 20 */
+
+/* ===== RESET & BASE ===== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 13px;
+  line-height: 1.4;
+  background: var(--background);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ===== AUTHENTIC COLORS - EXACT MATCH ===== */
+:root {
+  /* 2025 Exact Color Palette */
+  --yt-blue: #167dff;          /* Primary action color */
+  --yt-blue-hover: #0065d9;    
+  --yt-blue-light: #e6f3ff;    
+  --yt-purple: #9d5ec7;        
+  --yt-green: #59a869;         /* Success/Fixed states */
+  --yt-orange: #f57c00;        /* Warning states */
+  --yt-red: #db5860;           /* Error/Critical states */
+  --yt-yellow: #f8cc00;        
+
+  /* YouTrack Exact Grayscale Palette */
+  --gray-50: #fafbfc;
+  --gray-100: #f4f5f7;  
+  --gray-200: #ebecf0;
+  --gray-300: #dfe1e6;
+  --gray-400: #b3bac5;
+  --gray-500: #8993a4;
+  --gray-600: #6b778c;
+  --gray-700: #42526e;
+  --gray-800: #253858;
+  --gray-900: #172b4d;
+
+  /* Light Theme - YouTrack Exact Colors */
+  --background: #ffffff;
+  --background-secondary: #fafbfc;
+  --surface: #ffffff;
+  --surface-secondary: #f4f5f7;
+  --surface-elevated: #ffffff;
+  
+  /* Sidebar - Authentic Dark */
+  --sidebar-background: #253858;        /* exact sidebar color */
+  --sidebar-background-hover: #2c4066;  /* Slightly lighter on hover */
+  --sidebar-border: #1e2a3a;           /* Darker border */
+  --sidebar-item-hover: #2c4066;       /* Hover state */
+  --sidebar-item-active: #3d5afe;      /* Active state with blue */
+  --sidebar-text: #8993a4;             /* Muted text */
+  --sidebar-text-active: #ffffff;      /* Active text */
+  --sidebar-text-hover: #dfe1e6;       /* Hover text */
+  
+  /* Text Colors */
+  --text-primary: #172b4d;
+  --text-secondary: #42526e;
+  --text-tertiary: #6b778c;
+  --text-link: #0052cc;
+  --text-on-primary: #ffffff;
+
+  /* Hover and Interactive States */
+  --surface-hover: #f4f5f7;
+  --surface-selected: #deebff;
+  --text-success: #006644;
+  --text-warning: #974f0c;
+  --text-error: #bf2600;
+  
+  /* Borders */
+  --border-light: #dfe1e6;
+  --border-medium: #b3bac5;
+  --border-dark: #8993a4;
+  
+  /* Status Colors (Issue States) */
+  --status-open: #0052cc;      /* Blue for Open/Backlog */
+  --status-progress: #6554c0;  /* Purple for In Progress */
+  --status-review: #ff8b00;    /* Orange for Review */
+  --status-testing: #de350b;   /* Red for Testing */
+  --status-done: #00875a;      /* Green for Done/Fixed */
+  
+  /* Priority Colors -  Style */
+  --priority-critical: #de350b;
+  --priority-high: #ff8b00;
+  --priority-medium: #0052cc;
+  --priority-low: #00875a;
+  
+  /* Shadows -  Style */
+  --shadow-1: 0 1px 2px rgba(9, 30, 66, 0.25);
+  --shadow-2: 0 1px 3px rgba(9, 30, 66, 0.31);
+  --shadow-3: 0 4px 8px rgba(9, 30, 66, 0.25);
+  --shadow-4: 0 8px 12px rgba(9, 30, 66, 0.15);
+  
+  /* Layout */
+  --sidebar-width: 240px;
+  --sidebar-collapsed-width: 48px;
+  --header-height: 48px;
+  --border-radius: 3px;
+  --border-radius-large: 6px;
+
+/* Typography */
+  --font-size-xs: 11px;
+  --font-size-sm: 12px;
+  --font-size-base: 13px;
+  --font-size-lg: 14px;
+  --font-size-xl: 16px;
+  --font-size-2xl: 18px;
+  --font-size-3xl: 20px;
+  
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+}
+
+/* Dark Theme - Chrome DevTools/YouTube Soft Style for Better Readability */
+[data-theme="dark"] {
+  /* Chrome DevTools inspired - softer, more readable palette */
+  --background            : #1a1a1a;  /* Softer than pure black */
+  --background-secondary  : #2d2d2d;  /* Chrome DevTools sidebar color */
+  /* Surfaces that sit on the backdrop */
+  --surface               : #333333;  /* Chrome DevTools surface color */
+  --surface-secondary     : #2a2a2a;  /* Softer surface variant */
+  --surface-elevated      : #404040;  /* Modal/elevated surfaces - much lighter for readability */
+
+  /* Sidebar (kept same) */
+  --sidebar-background        : #253858;
+  --sidebar-background-hover  : #2c4066;
+  --sidebar-border            : #1e2a3a;
+  --sidebar-item-hover        : #2c4066;
+  --sidebar-item-active       : #3d5afe;
+  --sidebar-text              : #8993a4;
+  --sidebar-text-active       : #ffffff;
+  --sidebar-text-hover        : #dfe1e6;
+
+  /* Typography - YouTube/Chrome exact colors */
+  --text-primary       : #f1f3f4;  /* YouTube's primary text */
+  --text-secondary     : #aaaaaa;  /* YouTube's secondary text */
+  --text-tertiary      : #717171;  /* YouTube's disabled text */
+  --text-link          : #3ea6ff;  /* YouTube's link blue */
+  --text-on-primary    : #ffffff;  /* White text on primary buttons */
+
+  /* Borders & dividers - YouTube/Chrome style */
+  --border-light   : #3e3e3e;  /* YouTube's border color */
+  --border-medium  : #2f2f2f;  /* Slightly darker borders */
+  --border-dark    : #4a4a4a;  /* Stronger borders */
+
+  /* Colors - Dark Mode Versions */
+  --yt-blue: #4285f4;              /* Google Blue for dark mode */
+  --yt-blue-light: #1e3a5f;       /* Dark blue background for selections */
+  --yt-purple: #9c27b0;           /* Keep purple for avatars */
+
+  /* Hover states - Chrome DevTools style for better readability */
+  --surface-hover      : #4a4a4a;  /* Lighter hover for better contrast */
+  --surface-selected   : #505050;  /* Chrome DevTools selected color */
+
+  /* Shadows - Dark mode */
+  --shadow-2: 0 2px 6px rgba(0,0,0,.25);
+  --shadow-3: 0 4px 8px rgba(0,0,0,.35);
+
+  /* Missing dark mode variables */
+  --yt-blue-hover: #357ae8;
+}
+
+/* ===== MATERIAL DESIGN DARK MODE OVERRIDES ===== */
+[data-theme="dark"] {
+  /* Material Dialog Dark Mode */
+  .mat-mdc-dialog-surface {
+    background: var(--surface-elevated) !important;
+    color: var(--text-primary) !important;
+  }
+
+  .mat-mdc-dialog-container {
+    background: var(--surface-elevated) !important;
+  }
+
+  /* Material Form Fields Dark Mode */
+  .mat-mdc-form-field {
+    color: var(--text-primary) !important;
+  }
+
+  .mat-mdc-text-field-wrapper {
+    background: var(--surface) !important;
+  }
+
+  .mat-mdc-form-field-subscript-wrapper {
+    color: var(--text-secondary) !important;
+  }
+
+  /* Material Buttons Dark Mode */
+  .mat-mdc-button.mat-mdc-button-base {
+    color: var(--text-primary) !important;
+  }
+
+  .mat-mdc-outlined-button {
+    border-color: var(--border-light) !important;
+  }
+
+  /* Material Menu Dark Mode */
+  .mat-mdc-menu-panel {
+    background: var(--surface-elevated) !important;
+  }
+
+  .mat-mdc-menu-item {
+    color: var(--text-primary) !important;
+  }
+
+  .mat-mdc-menu-item:hover {
+    background: var(--surface-hover) !important;
+  }
+
+  /* Material Snackbar Dark Mode */
+  .mat-mdc-snack-bar-container {
+    background: var(--surface-elevated) !important;
+    color: var(--text-primary) !important;
+  }
+}
+
+/* ===== LAYOUT ===== */
+.youtrack-app {
+  display: flex;
+  height: 100vh;
+  background: var(--background);
+}
+
+/* ===== YOUTRACK SIDEBAR - AUTHENTIC STYLING ===== */
+.yt-sidebar {
+  width: var(--sidebar-width);
+  background: var(--sidebar-background);
+  border-right: 1px solid var(--sidebar-border);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: width 0.2s ease;
+  z-index: 100;
+  flex-shrink: 0;
+}
+
+.yt-sidebar.collapsed {
+  width: var(--sidebar-collapsed-width);
+}
+
+.yt-sidebar-header {
+  padding: 16px;
+  border-bottom: 1px solid var(--sidebar-border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+}
+
+.yt-logo {
+  width: 28px;
+  height: 28px;
+  background: var(--yt-blue);
+  border-radius: var(--border-radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-lg);
+  flex-shrink: 0;
+}
+
+.yt-project-name {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--sidebar-text-active);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.yt-sidebar.collapsed .yt-project-name {
+  display: none;
+}
+
+.yt-sidebar-nav {
+  flex: 1;
+  padding: 8px 0;
+  overflow-y: auto;
+}
+
+.yt-nav-section {
+  margin-bottom: 24px;
+}
+
+.yt-nav-section:last-child {
+  margin-bottom: 0;
+}
+
+.yt-nav-title {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--sidebar-text);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  padding: 8px 16px 6px;
+  margin-bottom: 4px;
+}
+
+.yt-sidebar.collapsed .yt-nav-title {
+  display: none;
+}
+
+.yt-nav-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  color: var(--sidebar-text);
+  text-decoration: none;
+  font-size: var(--font-size-base);
+  transition: all 0.15s ease;
+  position: relative;
+  gap: 12px;
+  min-height: 36px;
+  margin: 0 8px;
+  border-radius: var(--border-radius);
+}
+
+.yt-nav-item:hover {
+  background: var(--sidebar-item-hover);
+  color: var(--sidebar-text-hover);
+}
+
+.yt-nav-item.active {
+  background: var(--sidebar-item-active);
+  color: var(--sidebar-text-active);
+  font-weight: var(--font-weight-medium);
+  box-shadow: var(--shadow-1);
+}
+
+.yt-nav-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.yt-nav-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.yt-sidebar.collapsed .yt-nav-text {
+  display: none;
+}
+
+.yt-nav-badge {
+  background: var(--yt-blue);
+  color: white;
+  border-radius: 10px;
+  padding: 2px 6px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  min-width: 18px;
+  text-align: center;
+}
+
+.yt-sidebar.collapsed .yt-nav-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  transform: none;
+}
+
+/* ===== MAIN CONTENT AREA ===== */
+.yt-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--background);
+  overflow: hidden;
+}
+
+.yt-main-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border-light);
+  padding: 0 24px;
+  min-height: var(--header-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.yt-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.yt-breadcrumb-item {
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.yt-breadcrumb-item:hover {
+  color: var(--text-link);
+}
+
+.yt-breadcrumb-separator {
+  color: var(--text-tertiary);
+}
+
+.yt-page-title {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.yt-main-content {
+  flex: 1;
+  overflow: auto;
+  background: var(--background-secondary);
+}
+
+/* ===== YOUTRACK BUTTONS ===== */
+.yt-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid transparent;
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  min-height: 32px;
+}
+
+.yt-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.yt-btn-primary {
+  background: var(--yt-blue);
+  color: white;
+  border-color: var(--yt-blue);
+}
+
+.yt-btn-primary:hover:not(:disabled) {
+  background: var(--yt-blue-hover);
+  border-color: var(--yt-blue-hover);
+}
+
+.yt-btn-secondary {
+  background: var(--surface);
+  color: var(--text-primary);
+  border-color: var(--border-medium);
+}
+
+.yt-btn-secondary:hover:not(:disabled) {
+  border-color: var(--yt-blue);
+  color: var(--yt-blue);
+}
+
+.yt-btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border-color: transparent;
+}
+
+.yt-btn-ghost:hover:not(:disabled) {
+  background: var(--surface-secondary);
+  color: var(--text-primary);
+}
+
+.yt-btn-sm {
+  padding: 4px 8px;
+  font-size: var(--font-size-sm);
+  min-height: 24px;
+}
+
+.yt-btn-lg {
+  padding: 8px 16px;
+  font-size: var(--font-size-lg);
+  min-height: 40px;
+}
+
+.yt-btn-icon-only {
+  padding: 6px;
+  min-width: 32px;
+}
+
+/* ===== YOUTRACK CARDS ===== */
+.yt-card {
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--border-radius-large);
+  box-shadow: var(--shadow-1);
+  overflow: hidden;
+}
+
+.yt-card-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-light);
+  background: var(--surface);
+}
+
+.yt-card-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.yt-card-content {
+  padding: 20px;
+}
+
+.yt-card-footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--border-light);
+  background: var(--surface-secondary);
+}
+
+/* ===== YOUTRACK ISSUE CARD ===== */
+.yt-issue-card {
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--border-radius);
+  padding: 12px;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  position: relative;
+}
+
+.yt-issue-card:hover {
+  border-color: var(--yt-blue);
+  box-shadow: var(--shadow-2);
+}
+
+.yt-issue-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.yt-issue-id {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+}
+
+.yt-issue-summary {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  margin: 0 0 4px 0;
+  line-height: 1.3;
+}
+
+.yt-issue-description {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin: 0 0 8px 0;
+  line-height: 1.4;
+}
+
+.yt-issue-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.yt-issue-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  }
+
+.yt-priority-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  color: white;
+}
+
+.yt-priority-critical { background: var(--priority-critical); }
+.yt-priority-high { background: var(--priority-high); }
+.yt-priority-medium { background: var(--priority-medium); }
+.yt-priority-low { background: var(--priority-low); }
+
+.yt-status-badge {
+  padding: 2px 6px;
+  border-radius: 12px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: white;
+  text-transform: uppercase;
+}
+
+.yt-status-open { background: var(--status-open); }
+.yt-status-progress { background: var(--status-progress); }
+.yt-status-review { background: var(--status-review); }
+.yt-status-testing { background: var(--status-testing); }
+.yt-status-done { background: var(--status-done); }
+
+.yt-assignee {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.yt-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--yt-purple);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+}
+
+/* ===== YOUTRACK FORMS ===== */
+.yt-form-group {
+  margin-bottom: 16px;
+  }
+
+.yt-label {
+  display: block;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.yt-input,
+.yt-textarea,
+.yt-select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+  background: var(--surface);
+  transition: all 0.15s ease;
+}
+
+.yt-input:focus,
+.yt-textarea:focus,
+.yt-select:focus {
+  outline: none;
+  border-color: var(--yt-blue);
+  box-shadow: 0 0 0 2px var(--yt-blue-light);
+}
+
+.yt-textarea {
+  resize: vertical;
+  min-height: 80px;
+  }
+
+/* ===== YOUTRACK TABLE ===== */
+.yt-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-base);
+}
+
+.yt-table th,
+.yt-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.yt-table th {
+  background: var(--surface-secondary);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  }
+  
+.yt-table tbody tr:hover {
+  background: var(--surface-secondary);
+  }
+  
+/* ===== YOUTRACK UTILITIES ===== */
+.yt-loading {
+  display: flex;
+  align-items: center;
+    justify-content: center;
+  padding: 40px;
+  color: var(--text-secondary);
+}
+
+.yt-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--border-light);
+  border-top: 2px solid var(--yt-blue);
+  border-radius: 50%;
+  animation: yt-spin 1s linear infinite;
+  margin-right: 8px;
+}
+
+@keyframes yt-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.yt-empty {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-secondary);
+}
+
+.yt-empty svg {
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.yt-empty p {
+  margin-bottom: 16px;
+  }
+  
+.yt-error {
+  background: var(--surface-elevated);
+  color: var(--text-error);
+  padding: 12px 16px;
+  border-radius: var(--border-radius);
+  border-left: 4px solid var(--text-error);
+  margin-bottom: 16px;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .yt-sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    z-index: 1000;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+
+  .yt-sidebar.open {
+    transform: translateX(0);
+  }
+  
+  .yt-main {
+    margin-left: 0;
+  }
+  
+  .yt-main-header {
+    padding: 0 16px;
+  }
+}
+
+/* ===== ANGULAR MATERIAL OVERRIDES ===== */
+.mat-mdc-button {
+  --mdc-text-button-label-text-size: var(--font-size-base) !important;
+  --mdc-text-button-label-text-weight: var(--font-weight-medium) !important;
+  }
+  
+.mat-mdc-card {
+  --mdc-elevated-card-container-color: var(--surface) !important;
+  --mdc-elevated-card-container-elevation: var(--shadow-1) !important;
+  }
+  
+.mat-mdc-form-field {
+  --mdc-filled-text-field-container-color: var(--surface) !important;
+  --mdc-filled-text-field-focus-active-indicator-color: var(--yt-blue) !important;
+}
+
+/* ===== FILTER PANEL DIALOG OVERRIDES ===== */
+.filter-dropdown-panel .mat-mdc-dialog-container {
+  --mdc-dialog-container-color: transparent !important;
+  --mdc-dialog-container-shape: 6px !important;
+  --mdc-dialog-container-elevation: none !important;
+  padding: 0 !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  overflow: visible !important;
+}
+
+.jira-dropdown .mat-mdc-dialog-container {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.jira-dropdown .mat-mdc-dialog-surface {
+  padding: 0 !important;
+  border-radius: 6px !important;
+  overflow: visible !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.transparent-backdrop {
+  background: transparent !important;
+}
+
+/* Dropdown arrow styling */
+.filter-dropdown-panel::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 20px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 8px solid var(--border-light);
+  z-index: 1;
+}
+
+.filter-dropdown-panel::after {
+  content: '';
+  position: absolute;
+  top: -7px;
+  left: 20px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 8px solid var(--surface);
+  z-index: 2;
+} 
