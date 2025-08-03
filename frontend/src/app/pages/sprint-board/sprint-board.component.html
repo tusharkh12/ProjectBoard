@@ -1,0 +1,400 @@
+<div class="agile-board-container">
+  <!-- Board Header -->
+  <div class="board-header">
+    <div class="board-header-left">
+      <div class="board-title">
+        <mat-icon>view_kanban</mat-icon>
+        <h1>Agile Board</h1>
+      </div>
+      <div class="board-subtitle">Drag and drop tasks to update their status</div>
+    </div>
+    
+    <div class="board-header-right">
+      <div class="board-stats">
+        <span class="board-stat">{{ taskService.taskCount() }} tasks</span>
+        <span class="board-stat-separator">•</span>
+        <span class="board-stat">{{ getHighPriorityCount() }} high priority</span>
+      </div>
+
+      <div class="view-toggle-group">
+        <button mat-button class="view-toggle" routerLink="/tasks">
+          <mat-icon>view_list</mat-icon>
+          <span>List View</span>
+        </button>
+      </div>
+      
+      <div class="board-actions">
+        <button mat-raised-button color="primary" (click)="openCreateTaskModal()" aria-label="Create new issue">
+          <mat-icon>add</mat-icon>
+          Create
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Jira-Style Professional Filters - Single Clean Strip -->
+  <div class="board-filters">
+    <div class="jira-filter-bar">
+      <!-- Professional Search -->
+      <div class="jira-search-container">
+        <mat-icon class="search-icon">search</mat-icon>
+        <input 
+          type="text" 
+          placeholder="Search tasks..." 
+          [value]="filterForm.get('searchTerm')?.value || ''" 
+          (input)="updateSearch($event)"
+          class="search-field"
+          aria-label="Search tasks by title or description">
+        @if (filterForm.get('searchTerm')?.value) {
+          <button type="button" (click)="clearSearch()" class="clear-search-btn" aria-label="Clear search">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </div>
+
+                  <!-- Assignee Avatars -->
+        <div class="assignee-filter">
+          <div class="assignee-avatars">
+            @for (assignee of getVisibleAssignees(); track assignee; let i = $index) {
+              <div class="assignee-avatar" 
+                   [class.active]="isAssigneeSelected(assignee)" 
+                   [title]="assignee + (isAssigneeSelected(assignee) ? ' (selected)' : ' (click to filter)')"
+                   (click)="toggleAssigneeSelection(assignee, !isAssigneeSelected(assignee))">
+                {{ assignee.charAt(0).toUpperCase() }}
+<!--                @if (isAssigneeSelected(assignee)) {-->
+<!--                  <div class="selection-indicator">-->
+<!--                    <mat-icon>check</mat-icon>-->
+<!--                  </div>-->
+<!--                }-->
+              </div>
+            }
+            @if (getHiddenAssigneesCount() > 0) {
+              <div class="assignee-overflow" 
+                   [matMenuTriggerFor]="assigneeMenu"
+                   [title]="getHiddenAssigneesCount() + ' more assignees'">
+                +{{ getHiddenAssigneesCount() }}
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Priority Filter -->
+        <button mat-stroked-button class="filter-dropdown" [matMenuTriggerFor]="priorityMenu" 
+                [attr.aria-label]="'Filter by priority, ' + getSelectedPriorityCount() + ' selected'">
+          <mat-icon>flag</mat-icon>
+          <span>Priority</span>
+          @if (getSelectedPriorityCount() > 0) {
+            <span class="filter-count">{{ getSelectedPriorityCount() }}</span>
+          }
+          <mat-icon class="dropdown-arrow">arrow_drop_down</mat-icon>
+        </button>
+
+<!--          &lt;!&ndash; Clear Filters &ndash;&gt;-->
+<!--          @if (hasActiveFilters()) {-->
+<!--            <button mat-stroked-button class="clear-filters-btn" (click)="clearFilters()" -->
+<!--                    aria-label="Clear all active filters">-->
+<!--              <span>Clear</span>-->
+<!--              <mat-icon>close</mat-icon>-->
+<!--            </button>-->
+<!--          }-->
+    </div>
+
+    <!-- Sort Menu -->
+    <mat-menu #sortMenu="matMenu" class="jira-dropdown-menu">
+      <div class="dropdown-header">Sort By</div>
+      @for (option of sortOptions(); track option.value) {
+        <button mat-menu-item 
+                [class.active]="currentSort() === option.value"
+                (click)="setSortOption(option.value)">
+          <mat-icon>{{ option.icon }}</mat-icon>
+          <span>{{ option.label }}</span>
+          @if (currentSort() === option.value) {
+            <mat-icon class="check-icon">check</mat-icon>
+          }
+        </button>
+      }
+      <mat-divider></mat-divider>
+      <button mat-menu-item (click)="toggleSortDirection()">
+        <mat-icon>{{ sortDirection() === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
+        <span>{{ sortDirection() === 'asc' ? 'Ascending' : 'Descending' }}</span>
+      </button>
+    </mat-menu>
+
+    <!-- Display Menu -->
+    <mat-menu #displayMenu="matMenu" class="jira-dropdown-menu">
+      <div class="dropdown-header">Display Options</div>
+      <button mat-menu-item (click)="toggleIssueIds(!showIssueIds())">
+        <mat-icon>{{ showIssueIds() ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
+        <span>Show Task IDs</span>
+      </button>
+      <button mat-menu-item (click)="toggleEstimates(!showEstimates())">
+        <mat-icon>{{ showEstimates() ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
+        <span>Show Estimates</span>
+      </button>
+      <button mat-menu-item (click)="toggleAvatars(!showAvatars())">
+        <mat-icon>{{ showAvatars() ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
+        <span>Show Avatars</span>
+      </button>
+      <mat-divider></mat-divider>
+      <button mat-menu-item (click)="resetBoardSettings()">
+        <mat-icon>refresh</mat-icon>
+        <span>Reset to Default</span>
+      </button>
+    </mat-menu>
+
+    <!-- Assignee Menu -->
+    <mat-menu #assigneeMenu="matMenu" class="jira-dropdown-menu">
+      <div class="dropdown-header-container">
+        <span class="dropdown-header">Assignee</span>
+      </div>
+      @for (assignee of getHiddenAssignees(); track assignee) {
+        <mat-checkbox 
+          class="dropdown-option"
+          [checked]="isAssigneeSelected(assignee)"
+          (change)="toggleAssigneeSelection(assignee, $event.checked)"
+          (click)="$event.stopPropagation()">
+          <div class="option-content">
+            <div class="option-avatar">{{ assignee.charAt(0).toUpperCase() }}</div>
+            <span>{{ assignee }}</span>
+          </div>
+        </mat-checkbox>
+      }
+    </mat-menu>
+
+    <!-- Priority Menu -->
+    <mat-menu #priorityMenu="matMenu" class="jira-dropdown-menu">
+      <div class="dropdown-header-container">
+        <span class="dropdown-header">Priority</span>
+        @if (hasActiveFilters()) {-->
+        <button mat-button class="clear-all-btn" (click)="clearFilters()"
+                [disabled]="!hasActiveFilters()">
+          <span>Clear</span>
+        </button>
+        }
+      </div>
+      @for (priority of priorityOptions(); track priority.value) {
+        <mat-checkbox 
+          class="dropdown-option"
+          [checked]="isPrioritySelected(priority.value)"
+          (change)="togglePrioritySelection(priority.value, $event.checked)"
+          (click)="$event.stopPropagation()">
+          <div class="option-content">
+            <mat-icon class="priority-icon" [class]="'priority-' + priority.value.toLowerCase()">
+              {{ getPriorityIcon(priority.value) }}
+            </mat-icon>
+            <span>{{ priority.label }}</span>
+          </div>
+        </mat-checkbox>
+      }
+    </mat-menu>
+  </div>
+
+  <!-- Loading State -->
+  @if (taskService.loading()) {
+    <div class="board-loading">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Loading agile board...</p>
+    </div>
+  } @else {
+
+    <!-- Kanban Board with Unified Scrolling -->
+    <div class="kanban-board-container">
+      <div class="kanban-board" cdkDropListGroup>
+        @for (status of kanbanStatuses(); track status.value) {
+          <div class="kanban-column">
+            
+            <!-- Column Header -->
+            <div class="column-header" [class]="'status-' + status.value.toLowerCase()">
+              <div class="column-title">
+                <div class="status-indicator" [class]="'status-' + status.value.toLowerCase()"></div>
+                <h3>{{ status.label }}</h3>
+                <div class="issue-count">{{ getTasksByStatus(status.value).length }}</div>
+              </div>
+              
+              <div class="column-actions">
+                <button mat-icon-button [matMenuTriggerFor]="columnMenu">
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+                
+                <mat-menu #columnMenu="matMenu">
+                  <button mat-menu-item (click)="addTaskToColumn(status.value)">
+                    <mat-icon>add</mat-icon>
+                    Add Issue
+                  </button>
+                  <button mat-menu-item (click)="configureColumn(status.value)">
+                    <mat-icon>settings</mat-icon>
+                    Configure
+                  </button>
+                </mat-menu>
+              </div>
+            </div>
+
+            <!-- Issue Cards Container -->
+            <div class="cards-container"
+                 cdkDropList
+                 [cdkDropListData]="getTasksByStatus(status.value)"
+                 [cdkDropListConnectedTo]="getAllDropListIds()"
+                 (cdkDropListDropped)="onTaskDrop($event)"
+                 [id]="getDropListId(status.value)">
+              
+              @if (getTasksByStatus(status.value).length > 0) {
+                
+                <!-- Issue Cards -->
+                @for (task of getTasksByStatus(status.value); track task.id) {
+                  <div class="issue-card"
+                       cdkDrag
+                       [cdkDragData]="task"
+                       [class]="'priority-' + task.priority.toLowerCase()">
+                    
+                    <!-- Issue Card Header -->
+                    <div class="issue-header">
+                      <div class="issue-id">
+                        {{ IssueUtils.generateIssueId(task.id || 0) }}
+                      </div>
+                      
+                      <div class="issue-actions">
+                        <button mat-icon-button (click)="openTaskEditor(task)" class="edit-btn"
+                                [attr.aria-label]="'View details for ' + task.title">
+                          <mat-icon>visibility</mat-icon>
+                        </button>
+                        <button mat-icon-button [matMenuTriggerFor]="issueMenu" class="menu-btn"
+                                [attr.aria-label]="'More actions for ' + task.title">
+                          <mat-icon>more_vert</mat-icon>
+                        </button>
+                        
+                        <mat-menu #issueMenu="matMenu">
+                          <button mat-menu-item (click)="openTaskEditor(task)">
+                            <mat-icon>visibility</mat-icon>
+                            View Details
+                          </button>
+                          <button mat-menu-item [routerLink]="['/tasks', task.id, 'edit']">
+                            <mat-icon>edit</mat-icon>
+                            Edit
+                          </button>
+                          <button mat-menu-item (click)="duplicateTask(task)">
+                            <mat-icon>content_copy</mat-icon>
+                            Duplicate
+                          </button>
+                          <mat-divider></mat-divider>
+                          <button mat-menu-item (click)="deleteTask(task)" class="delete-action">
+                            <mat-icon>delete</mat-icon>
+                            Delete
+                          </button>
+                        </mat-menu>
+                      </div>
+                    </div>
+
+                    <!-- Issue Title -->
+                    <div class="issue-title" (click)="openTaskEditor(task)" role="button" tabindex="0"
+                         [attr.aria-label]="'Click to view details for ' + task.title">
+                      {{ task.title }}
+                    </div>
+
+                    <!-- Issue Description -->
+                    @if (task.description) {
+                      <div class="issue-description">
+                        {{ task.description.length > 80 ? (task.description | slice:0:80) + '...' : task.description }}
+                      </div>
+                    }
+
+                    <!-- Issue Tags -->
+                    @if (task.tags) {
+                      <div class="issue-tags">
+                        @for (tag of getTaskTags(task.tags); track tag) {
+                          <span class="tag">{{ tag }}</span>
+                        }
+                      </div>
+                    }
+
+                    <!-- Issue Footer -->
+                    <div class="issue-footer">
+                      <div class="issue-meta">
+                        <!-- Priority Indicator -->
+                        <div class="priority-badge" 
+                             [class]="'priority-' + task.priority.toLowerCase()"
+                             [title]="getPriorityDisplay(task.priority)">
+                          <mat-icon [class]="'priority-icon-' + task.priority.toLowerCase()">
+                            {{ getPriorityIcon(task.priority) }}
+                          </mat-icon>
+                        </div>
+                        
+                        <!-- Time Estimate -->
+                        @if (task.estimatedHours) {
+                          <div class="time-estimate">
+                            <mat-icon>schedule</mat-icon>
+                            {{ task.estimatedHours }}h
+                          </div>
+                        }
+                        
+                        <!-- Overdue Indicator -->
+                        @if (isTaskOverdue(task)) {
+                          <div class="overdue-indicator" title="Overdue">
+                            <mat-icon>warning</mat-icon>
+                          </div>
+                        }
+                      </div>
+                      
+                      <!-- Assignee -->
+                      @if (task.assignee) {
+                        <div class="assignee" [title]="task.assignee">
+                          <div class="avatar">
+                            {{ task.assignee.charAt(0).toUpperCase() }}
+                          </div>
+                          <span class="assignee-name">{{ task.assignee }}</span>
+                        </div>
+                      } @else {
+                        <div class="unassigned">
+                          <mat-icon>person_outline</mat-icon>
+                          Unassigned
+                        </div>
+                      }
+                    </div>
+
+                    <!-- Drag Preview -->
+                    <div class="drag-preview" *cdkDragPreview>
+                      <div class="preview-card">
+                        <div class="preview-id">{{ IssueUtils.generateIssueId(task.id || 0) }}</div>
+                        <div class="preview-title">{{ task.title }}</div>
+                        <div class="preview-meta">
+                          <span class="preview-priority" [class]="'priority-' + task.priority.toLowerCase()">
+                            {{ getPriorityDisplay(task.priority) }}
+                          </span>
+                          @if (task.assignee) {
+                            <span class="preview-assignee">{{ task.assignee }}</span>
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                }
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+  }
+
+  <!-- Error State -->
+  @if (taskService.error()) {
+    <div class="board-error">
+      <mat-icon class="error-icon">error_outline</mat-icon>
+      <h3>Error Loading Board</h3>
+      <p>{{ taskService.error() }}</p>
+      <button mat-raised-button color="primary" (click)="refreshBoard()">
+        <mat-icon>refresh</mat-icon>
+        Try Again
+      </button>
+    </div>
+  }
+  
+  <!-- Task Panel - Outside board container for proper fixed positioning -->
+  @if (isPanelOpen() && selectedTaskId()) {
+    <app-task-panel 
+      [taskId]="selectedTaskId()!" 
+      [isOpen]="isPanelOpen()"
+      (closePanel)="closeTaskPanel()">
+    </app-task-panel>
+  }
+</div>
