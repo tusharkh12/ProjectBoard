@@ -1,0 +1,82 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+spring:
+  application:
+    name: ProjectBoard Backend
+    
+  # H2 Database Configuration
+  datasource:
+    url: jdbc:h2:mem:projectboard;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driverClassName: org.h2.Driver
+    username: sa
+    password: password
+    
+  # H2 Console (for development)
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+      settings:
+        web-allow-others: true
+        
+  # JPA Configuration
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    format-sql: true
+    defer-datasource-initialization: true
+    
+  # SQL Script Initialization
+  sql:
+    init:
+      mode: always
+      data-locations: classpath:data.sql
+      
+  # Jackson Configuration
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    time-zone: UTC
+    
+  # Validation Configuration
+  validation:
+    enabled: true
+
+# Logging Configuration
+logging:
+  level:
+    com.projectboard: DEBUG
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# Management/Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+      
+# Custom Application Properties
+projectboard:
+  version: 1.0.0
+  description: "ProjectBoard - Collaborative Task Management with Conflict Resolution"
+  features:
+    optimistic-locking: true
+    conflict-resolution: true
+    real-time-updates: true
+
+app:
+  cors:
+    origins: http://localhost:4200
