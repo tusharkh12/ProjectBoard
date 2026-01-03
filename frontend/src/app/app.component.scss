@@ -8,17 +8,87 @@
 .yt-user-menu {
   display: flex;
   align-items: center;
+  gap: 8px;
 }
 
 .yt-user-menu .yt-avatar {
-  width: 32px;
-  height: 32px;
-  cursor: pointer;
-  transition: all 0.15s ease;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: default;
+  user-select: none;
+  flex-shrink: 0;
 }
 
-.yt-user-menu .yt-avatar:hover {
-  transform: scale(1.05);
+.yt-logout-btn {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  position: relative;
+  
+  // Logout icon using CSS mask
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 14px;
+    height: 14px;
+    background-color: currentColor;
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4'%3E%3C/path%3E%3Cpolyline points='16 17 21 12 16 7'%3E%3C/polyline%3E%3Cline x1='21' y1='12' x2='9' y2='12'%3E%3C/line%3E%3C/svg%3E");
+    mask-size: contain;
+    mask-position: center;
+    mask-repeat: no-repeat;
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4'%3E%3C/path%3E%3Cpolyline points='16 17 21 12 16 7'%3E%3C/polyline%3E%3Cline x1='21' y1='12' x2='9' y2='12'%3E%3C/line%3E%3C/svg%3E");
+    -webkit-mask-size: contain;
+    -webkit-mask-position: center;
+    -webkit-mask-repeat: no-repeat;
+  }
+  
+  &:hover {
+    background: var(--surface-hover, rgba(102, 126, 234, 0.1));
+    border-color: var(--yt-blue, #667eea);
+    color: var(--yt-blue, #667eea);
+    transform: translateY(-1px);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+  
+  &:focus {
+    outline: 2px solid var(--yt-blue, #667eea);
+    outline-offset: 2px;
+  }
+}
+
+/* Dark mode support */
+[data-theme="dark"] {
+  .yt-logout-btn {
+    border-color: var(--border-light, #4a5568);
+    color: var(--text-secondary, #a0aec0);
+    
+    &:hover {
+      background: rgba(102, 126, 234, 0.15);
+      border-color: var(--yt-blue, #667eea);
+      color: var(--yt-blue, #667eea);
+    }
+  }
 }
 
 .yt-loading-overlay {

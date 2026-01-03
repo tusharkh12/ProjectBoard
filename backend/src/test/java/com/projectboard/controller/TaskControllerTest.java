@@ -1,7 +1,9 @@
 package com.projectboard.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.projectboard.dto.TaskDTO;
+import com.projectboard.dto.TaskResponse;
+import com.projectboard.dto.TaskCreateRequest;
+import com.projectboard.dto.TaskUpdateRequest;
 import com.projectboard.exception.OptimisticLockingException;
 import com.projectboard.exception.TaskNotFoundException;
 import com.projectboard.service.TaskService;
@@ -44,14 +46,14 @@ class TaskControllerTest {
     @MockitoBean
     private TaskService taskService;
 
-    private TaskDTO.Response sampleTaskResponse;
-    private TaskDTO.CreateRequest createRequest;
-    private TaskDTO.UpdateRequest updateRequest;
-    private List<TaskDTO.Response> taskList;
+    private TaskResponse sampleTaskResponse;
+    private TaskCreateRequest createRequest;
+    private TaskUpdateRequest updateRequest;
+    private List<TaskResponse> taskList;
 
     @BeforeEach
     void setUp() {
-        sampleTaskResponse = TaskDTO.Response.builder()
+        sampleTaskResponse = TaskResponse.builder()
                 .id(1L)
                 .title("Sample Task")
                 .description("Task description")
@@ -67,7 +69,7 @@ class TaskControllerTest {
                 .updatedBy("system")
                 .build();
 
-        createRequest = TaskDTO.CreateRequest.builder()
+        createRequest = TaskCreateRequest.builder()
                 .title("New Task")
                 .description("New task description")
                 .status("BACKLOG")
@@ -77,7 +79,7 @@ class TaskControllerTest {
                 .tags("frontend,ui")
                 .build();
 
-        updateRequest = TaskDTO.UpdateRequest.builder()
+        updateRequest = TaskUpdateRequest.builder()
                 .title("Updated Task")
                 .description("Updated description")
                 .status("IN_PROGRESS")
@@ -145,7 +147,7 @@ class TaskControllerTest {
     @DisplayName("POST /api/tasks - Should create new task")
     void createTask_Success() throws Exception {
         // Given
-        TaskDTO.Response createdTask = TaskDTO.Response.builder()
+        TaskResponse createdTask = TaskResponse.builder()
                 .id(2L)
                 .title("New Task")
                 .description("New task description")
@@ -161,7 +163,7 @@ class TaskControllerTest {
                 .updatedBy("system")
                 .build();
 
-        when(taskService.createTask(any(TaskDTO.CreateRequest.class))).thenReturn(createdTask);
+        when(taskService.createTask(any(TaskCreateRequest.class))).thenReturn(createdTask);
 
         // When/Then
         mockMvc.perform(post("/api/tasks")
@@ -174,14 +176,14 @@ class TaskControllerTest {
                 .andExpect(jsonPath("$.priority", is("HIGH")))
                 .andExpect(jsonPath("$.version", is(0)));
 
-        verify(taskService).createTask(any(TaskDTO.CreateRequest.class));
+        verify(taskService).createTask(any(TaskCreateRequest.class));
     }
 
     @Test
     @DisplayName("POST /api/tasks - Should return 400 for invalid request")
     void createTask_InvalidRequest() throws Exception {
         // Given - Invalid request with missing required fields
-        TaskDTO.CreateRequest invalidRequest = TaskDTO.CreateRequest.builder()
+        TaskCreateRequest invalidRequest = TaskCreateRequest.builder()
                 .description("Missing title")
                 .build();
 
@@ -191,14 +193,14 @@ class TaskControllerTest {
                         .content(objectMapper.writeValueAsString(invalidRequest)))
                 .andExpect(status().isBadRequest());
 
-        verify(taskService, never()).createTask(any(TaskDTO.CreateRequest.class));
+        verify(taskService, never()).createTask(any(TaskCreateRequest.class));
     }
 
     @Test
     @DisplayName("PUT /api/tasks/{id} - Should update existing task")
     void updateTask_Success() throws Exception {
         // Given
-        TaskDTO.Response updatedTask = TaskDTO.Response.builder()
+        TaskResponse updatedTask = TaskResponse.builder()
                 .id(1L)
                 .title("Updated Task")
                 .description("Updated description")
@@ -214,7 +216,7 @@ class TaskControllerTest {
                 .updatedBy("system")
                 .build();
 
-        when(taskService.updateTask(eq(1L), any(TaskDTO.UpdateRequest.class))).thenReturn(updatedTask);
+        when(taskService.updateTask(eq(1L), any(TaskUpdateRequest.class))).thenReturn(updatedTask);
 
         // When/Then
         mockMvc.perform(put("/api/tasks/1")
@@ -227,14 +229,14 @@ class TaskControllerTest {
                 .andExpect(jsonPath("$.status", is("IN_PROGRESS")))
                 .andExpect(jsonPath("$.version", is(2)));
 
-        verify(taskService).updateTask(eq(1L), any(TaskDTO.UpdateRequest.class));
+        verify(taskService).updateTask(eq(1L), any(TaskUpdateRequest.class));
     }
 
     @Test
     @DisplayName("PUT /api/tasks/{id} - Should return 409 on version conflict")
     void updateTask_OptimisticLockingConflict() throws Exception {
         // Given
-        TaskDTO.Response conflictData = TaskDTO.Response.builder()
+        TaskResponse conflictData = TaskResponse.builder()
                 .id(1L)
                 .title("Conflicting Task")
                 .description("Task modified by another user")
@@ -253,7 +255,7 @@ class TaskControllerTest {
         OptimisticLockingException exception = new OptimisticLockingException(
                 "Task was modified by another user", 2L, 1L, conflictData);
 
-        when(taskService.updateTask(eq(1L), any(TaskDTO.UpdateRequest.class))).thenThrow(exception);
+        when(taskService.updateTask(eq(1L), any(TaskUpdateRequest.class))).thenThrow(exception);
 
         // When/Then
         mockMvc.perform(put("/api/tasks/1")
@@ -266,14 +268,14 @@ class TaskControllerTest {
                 .andExpect(jsonPath("$.currentData.id", is(1)))
                 .andExpect(jsonPath("$.currentData.version", is(2)));
 
-        verify(taskService).updateTask(eq(1L), any(TaskDTO.UpdateRequest.class));
+        verify(taskService).updateTask(eq(1L), any(TaskUpdateRequest.class));
     }
 
     @Test
     @DisplayName("PUT /api/tasks/{id} - Should return 404 when task not found")
     void updateTask_TaskNotFound() throws Exception {
         // Given
-        when(taskService.updateTask(eq(999L), any(TaskDTO.UpdateRequest.class)))
+        when(taskService.updateTask(eq(999L), any(TaskUpdateRequest.class)))
                 .thenThrow(new TaskNotFoundException("Task not found with ID: 999"));
 
         // When/Then
@@ -282,7 +284,7 @@ class TaskControllerTest {
                         .content(objectMapper.writeValueAsString(updateRequest)))
                 .andExpect(status().isNotFound());
 
-        verify(taskService).updateTask(eq(999L), any(TaskDTO.UpdateRequest.class));
+        verify(taskService).updateTask(eq(999L), any(TaskUpdateRequest.class));
     }
 
     @Test

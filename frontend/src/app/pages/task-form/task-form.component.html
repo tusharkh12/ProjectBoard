@@ -128,7 +128,7 @@
                 <mat-form-field appearance="outline" class="half-width">
                   <mat-label>Status *</mat-label>
                   <mat-select formControlName="status" required>
-                    @for (status of statusOptions(); track status.value) {
+                    @for (status of statusOptions; track status.value) {
                       <mat-option [value]="status.value">
                         <div class="status-option">
                           <mat-icon>{{ getStatusIcon(status.value) }}</mat-icon>
@@ -145,7 +145,7 @@
                 <mat-form-field appearance="outline" class="half-width">
                   <mat-label>Priority *</mat-label>
                   <mat-select formControlName="priority" required>
-                    @for (priority of priorityOptions(); track priority.value) {
+                    @for (priority of priorityOptions; track priority.value) {
                       <mat-option [value]="priority.value">
                         <div class="priority-option" [class]="getPriorityClass(priority.value)">
                           <mat-icon>{{ getPriorityIcon(priority.value) }}</mat-icon>

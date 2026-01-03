@@ -1,14 +1,15 @@
 import { ApplicationConfig, provideZonelessChangeDetection } from '@angular/core';
 import { provideRouter, withComponentInputBinding, withViewTransitions } from '@angular/router';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
-import { provideHttpClient, withFetch, withInterceptorsFromDi } from '@angular/common/http';
+import { provideHttpClient, withFetch, withInterceptorsFromDi, withInterceptors } from '@angular/common/http';
 import { routes } from './app.routes';
+import { authInterceptor } from './interceptors/auth.interceptor';
 
 /**
- * Angular 20 Application Configuration
+ * Angular 21 Application Configuration
  * 
  * Features:
- * - Zoneless change detection (now in developer preview)
+ * - Zoneless change detection (stable in Angular 21)
  * - Modern router with view transitions and input binding
  * - Async animations for better loading performance
  * - HTTP client with fetch API
@@ -16,10 +17,10 @@ import { routes } from './app.routes';
  */
 export const appConfig: ApplicationConfig = {
   providers: [
-    // Angular 20: Zoneless change detection (now developer preview, not experimental)
+    // Angular 21: Zoneless change detection (stable)
     provideZonelessChangeDetection(),
     
-    // Modern router configuration with Angular 20 features
+    // Modern router configuration with Angular 21 features
     provideRouter(
       routes,
       withComponentInputBinding(), // Automatic route param to signal input binding
@@ -32,7 +33,9 @@ export const appConfig: ApplicationConfig = {
     // HTTP client with modern features
     provideHttpClient(
       withFetch(), // Use modern fetch API instead of XMLHttpRequest
-      withInterceptorsFromDi() // Support for dependency injection based interceptors
+      withInterceptorsFromDi(), // Support for dependency injection based interceptors
+      withInterceptors([authInterceptor]) // Add JWT token to all requests
+      // Note: Request timeout can be configured per-request using timeout option
     )
   ]
 }; 

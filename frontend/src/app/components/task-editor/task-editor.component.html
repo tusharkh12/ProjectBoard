@@ -81,7 +81,7 @@
                     </div>
                   }
                 </mat-select-trigger>
-                @for (status of statusOptions(); track status.value) {
+                @for (status of statusOptions; track status.value) {
                   <mat-option [value]="status.value">
                     <div class="status-option">
                       <div class="status-dot" [class]="'dot-' + status.value.toLowerCase()"></div>
@@ -109,7 +109,7 @@
                     </div>
                   }
                 </mat-select-trigger>
-                @for (priority of priorityOptions(); track priority.value) {
+                @for (priority of priorityOptions; track priority.value) {
                   <mat-option [value]="priority.value">
                     <div class="priority-option">
                       <mat-icon class="priority-icon" [class]="priority.value.toLowerCase()">
@@ -303,13 +303,13 @@
                       <div class="field-name">{{ getFieldDisplayName(field) }}</div>
                       <div class="your-value">
                         @if (field === 'status') {
-                          <span class="status-badge" [class]="'status-' + getCurrentFormValue('status').toLowerCase()">
-                            {{ getStatusDisplay(getCurrentFormValue('status')) }}
+                          <span class="status-badge" [class]="'status-' + getCurrentFormValueAsString('status').toLowerCase()">
+                            {{ getStatusDisplay(getCurrentFormValueAsStatus('status')) }}
                           </span>
                         } @else if (field === 'priority') {
-                          <span class="priority-badge" [class]="'priority-' + getCurrentFormValue('priority').toLowerCase()">
-                            <mat-icon>{{ getPriorityIcon(getCurrentFormValue('priority')) }}</mat-icon>
-                            {{ getPriorityDisplay(getCurrentFormValue('priority')) }}
+                          <span class="priority-badge" [class]="'priority-' + getCurrentFormValueAsString('priority').toLowerCase()">
+                            <mat-icon>{{ getPriorityIcon(getCurrentFormValueAsPriority('priority')) }}</mat-icon>
+                            {{ getPriorityDisplay(getCurrentFormValueAsPriority('priority')) }}
                           </span>
                         } @else {
                           {{ getFieldDisplayValue(field, 'user') }}

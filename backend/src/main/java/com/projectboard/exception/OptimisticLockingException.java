@@ -1,6 +1,6 @@
 package com.projectboard.exception;
 
-import com.projectboard.dto.TaskDTO;
+import com.projectboard.dto.TaskResponse;
 import lombok.Getter;
 
 /**
@@ -12,9 +12,9 @@ public class OptimisticLockingException extends RuntimeException {
     
     private final Long currentVersion;
     private final Long attemptedVersion;
-    private final TaskDTO.Response currentTaskData;
+    private final TaskResponse currentTaskData;
 
-    public OptimisticLockingException(String message, Long currentVersion, Long attemptedVersion, TaskDTO.Response currentTaskData) {
+    public OptimisticLockingException(String message, Long currentVersion, Long attemptedVersion, TaskResponse currentTaskData) {
         super(message);
         this.currentVersion = currentVersion;
         this.attemptedVersion = attemptedVersion;
