@@ -109,7 +109,7 @@
                                           <mat-form-field appearance="outline" class="priority-field">
                         <mat-label>Priority</mat-label>
                         <mat-select formControlName="priority" id="priority-field">
-                        @for (priority of priorityOptions(); track priority.value) {
+                        @for (priority of priorityOptions; track priority.value) {
                           <mat-option [value]="priority.value">
                             <div class="priority-option">
                               <mat-icon class="priority-icon" [class]="'priority-' + priority.value.toLowerCase()">
@@ -180,7 +180,7 @@
                                           <mat-form-field appearance="outline" class="status-field">
                         <mat-label>Status</mat-label>
                         <mat-select formControlName="status" id="status-field">
-                        @for (status of statusOptions(); track status.value) {
+                        @for (status of statusOptions; track status.value) {
                           <mat-option [value]="status.value">
                             <div class="status-option">
                               <div class="status-dot" [class]="'dot-' + status.value.toLowerCase()"></div>

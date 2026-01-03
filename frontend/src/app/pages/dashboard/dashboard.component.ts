@@ -1,4 +1,5 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -52,6 +53,7 @@ import { TaskEditorComponent, TaskEditorData } from '../../components/task-edito
 export class DashboardComponent implements OnInit {
   public readonly taskService = inject(TaskService);
   private readonly dialog = inject(MatDialog);
+  private readonly destroyRef = inject(DestroyRef);
   readonly TaskPriority = TaskPriority;
   readonly IssueUtils = IssueUtils;
 
@@ -63,20 +65,20 @@ export class DashboardComponent implements OnInit {
   readonly selectedTaskId = signal<number | null>(null);
   readonly isPanelOpen = signal(false);
 
-  readonly statusList = signal([
+  readonly statusList = [
     { status: TaskStatus.BACKLOG, displayName: TaskUtils.getStatusDisplay(TaskStatus.BACKLOG).displayName },
     { status: TaskStatus.IN_PROGRESS, displayName: TaskUtils.getStatusDisplay(TaskStatus.IN_PROGRESS).displayName },
     { status: TaskStatus.REVIEW, displayName: TaskUtils.getStatusDisplay(TaskStatus.REVIEW).displayName },
     { status: TaskStatus.TESTING, displayName: TaskUtils.getStatusDisplay(TaskStatus.TESTING).displayName },
     { status: TaskStatus.DONE, displayName: TaskUtils.getStatusDisplay(TaskStatus.DONE).displayName }
-  ]);
+  ] as const;
 
-  readonly priorityList = signal([
+  readonly priorityList = [
     { priority: TaskPriority.CRITICAL, displayName: TaskUtils.getPriorityDisplay(TaskPriority.CRITICAL).displayName },
     { priority: TaskPriority.HIGH, displayName: TaskUtils.getPriorityDisplay(TaskPriority.HIGH).displayName },
     { priority: TaskPriority.MEDIUM, displayName: TaskUtils.getPriorityDisplay(TaskPriority.MEDIUM).displayName },
     { priority: TaskPriority.LOW, displayName: TaskUtils.getPriorityDisplay(TaskPriority.LOW).displayName }
-  ]);
+  ] as const;
 
   readonly recentTasks = computed(() => {
     const tasks = this.taskService.filteredTasks();
@@ -103,7 +105,9 @@ export class DashboardComponent implements OnInit {
     Promise.all([
       this.taskService.loadTasks().toPromise(),
       this.taskService.loadStatistics().toPromise()
-    ]).finally(() => {
+    ]).catch((error) => {
+      console.error('Error refreshing dashboard:', error);
+    }).finally(() => {
       this.loading.set(false);
     });
   }
@@ -169,7 +173,7 @@ export class DashboardComponent implements OnInit {
   }
 
      // Priority Statistics
-   getPriorityStats(): any[] {
+   getPriorityStats(): Array<{ name: TaskPriority; displayName: string; icon: string; count: number; percentage: number }> {
      const total = this.getTotalTasks();
      if (total === 0) return [];
 
@@ -211,7 +215,7 @@ export class DashboardComponent implements OnInit {
    }
 
   // Team Statistics
-  getTeamStats(): any[] {
+  getTeamStats(): Array<{ name: string; count: number; percentage: number }> {
     const tasks = this.taskService.filteredTasks();
     const assigneeCounts = new Map<string, number>();
     
@@ -324,7 +328,7 @@ export class DashboardComponent implements OnInit {
     return TaskUtils.getPriorityDisplay(priority).icon;
   }
 
-  formatTimestamp(timestamp: any): string {
+  formatTimestamp(timestamp: string | number | Date | null | undefined): string {
     if (!timestamp) return 'Unknown';
     const date = new Date(timestamp);
     return date.toLocaleDateString('en-US', {
@@ -358,12 +362,14 @@ export class DashboardComponent implements OnInit {
       } as TaskEditorData
     });
 
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        // Task was updated successfully, refresh the dashboard
-        this.refreshDashboard();
-      }
-    });
+    dialogRef.afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(result => {
+        if (result) {
+          // Task was updated successfully, refresh the dashboard
+          this.refreshDashboard();
+        }
+      });
   }
 
   closeTaskPanel(): void {
@@ -383,11 +389,13 @@ export class DashboardComponent implements OnInit {
       } as TaskEditorData
     });
 
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        // Task was created successfully, refresh the dashboard
-        this.refreshDashboard();
-      }
-    });
+    dialogRef.afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(result => {
+        if (result) {
+          // Task was created successfully, refresh the dashboard
+          this.refreshDashboard();
+        }
+      });
   }
 } 

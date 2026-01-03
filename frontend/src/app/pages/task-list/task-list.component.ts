@@ -1,4 +1,5 @@
-import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, computed, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
@@ -19,12 +20,13 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDividerModule } from '@angular/material/divider';
 
 import { TaskService } from '../../services/task.service';
-import { Task, TaskStatus, TaskPriority, TaskUtils, IssueUtils, ConflictErrorResponse, TaskSearchCriteria } from '../../models/task.model';
+import { Task, TaskStatus, TaskPriority, TaskUtils, IssueUtils, ConflictErrorResponse, TaskSearchCriteria, CreateTaskRequest, UpdateTaskRequest } from '../../models/task.model';
 
 import { TaskPanelComponent } from '../../components/task-panel/task-panel.component';
 
 import { TaskEditorComponent, TaskEditorData } from '../../components/task-editor/task-editor.component';
-import {FilterPanelComponent} from "../../components/filter-panel/filter-panel.component";
+import { FilterPanelComponent } from "../../components/filter-panel/filter-panel.component";
+import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/confirm-dialog/confirm-dialog.component';
 
 /**
  * Professional Task List Component
@@ -65,11 +67,12 @@ import {FilterPanelComponent} from "../../components/filter-panel/filter-panel.c
   styleUrls: ['./task-list.component.scss']
 })
 export class TaskListComponent implements OnInit, OnDestroy {
-  // Angular 20 - Use inject() for DI
+  // Angular 21 - Use inject() for DI
   readonly taskService = inject(TaskService);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
   private readonly fb = inject(FormBuilder);
+  private readonly destroyRef = inject(DestroyRef);
 
   // Task Status and Priority enums for template use
   readonly TaskStatus = TaskStatus;
@@ -109,29 +112,28 @@ export class TaskListComponent implements OnInit, OnDestroy {
   readonly selectedTaskId = signal<number | null>(null);
   readonly isPanelOpen = signal(false);
 
-  // Available filter options
-  readonly availableStatuses = signal([
+  readonly availableStatuses = [
     { value: TaskStatus.BACKLOG, label: TaskUtils.getStatusDisplay(TaskStatus.BACKLOG).displayName },
     { value: TaskStatus.IN_PROGRESS, label: TaskUtils.getStatusDisplay(TaskStatus.IN_PROGRESS).displayName },
     { value: TaskStatus.REVIEW, label: TaskUtils.getStatusDisplay(TaskStatus.REVIEW).displayName },
     { value: TaskStatus.TESTING, label: TaskUtils.getStatusDisplay(TaskStatus.TESTING).displayName },
     { value: TaskStatus.DONE, label: TaskUtils.getStatusDisplay(TaskStatus.DONE).displayName }
-  ]);
+  ] as const;
 
-  readonly availablePriorities = signal([
+  readonly availablePriorities = [
     { value: TaskPriority.CRITICAL, label: TaskUtils.getPriorityDisplay(TaskPriority.CRITICAL).displayName },
     { value: TaskPriority.HIGH, label: TaskUtils.getPriorityDisplay(TaskPriority.HIGH).displayName },
     { value: TaskPriority.MEDIUM, label: TaskUtils.getPriorityDisplay(TaskPriority.MEDIUM).displayName },
     { value: TaskPriority.LOW, label: TaskUtils.getPriorityDisplay(TaskPriority.LOW).displayName }
-  ]);
+  ] as const;
 
-  readonly sortOptions = signal([
+  readonly sortOptions = [
     { value: 'status', label: 'Status', icon: 'assignment_turned_in' },
     { value: 'priority', label: 'Priority', icon: 'flag' },
     { value: 'assignee', label: 'Assignee', icon: 'person' },
     { value: 'createdAt', label: 'Created', icon: 'access_time' },
     { value: 'updatedAt', label: 'Updated', icon: 'schedule' }
-  ]);
+  ] as const;
 
   // Computed properties
   readonly allTasks = computed(() => this.taskService.filteredTasks());
@@ -229,7 +231,7 @@ export class TaskListComponent implements OnInit, OnDestroy {
     // Update time signal every minute to refresh relative timestamps
     this.timeUpdateInterval = setInterval(() => {
       this.currentTime.set(Date.now());
-    }, 60000) as any; // Update every minute
+    }, 60000) as unknown as number; // Update every minute
   }
 
   ngOnDestroy(): void {
@@ -239,7 +241,9 @@ export class TaskListComponent implements OnInit, OnDestroy {
   }
 
   refreshIssues(): void {
-    this.taskService.loadTasks().subscribe();
+    this.taskService.loadTasks()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe();
     this.selectedIssues.set([]);
   }
 
@@ -300,16 +304,18 @@ export class TaskListComponent implements OnInit, OnDestroy {
   }
 
   // Assignee filter methods
+  private readonly MAX_VISIBLE_ASSIGNEES = 5;
+
   getVisibleAssignees(): string[] {
-    return this.allAssignees().slice(0, 5); // Show first 5 assignees
+    return this.allAssignees().slice(0, this.MAX_VISIBLE_ASSIGNEES);
   }
 
   getHiddenAssignees(): string[] {
-    return this.allAssignees().slice(5); // Rest go in overflow menu
+    return this.allAssignees().slice(this.MAX_VISIBLE_ASSIGNEES);
   }
 
   getHiddenAssigneesCount(): number {
-    return Math.max(0, this.allAssignees().length - 5);
+    return Math.max(0, this.allAssignees().length - this.MAX_VISIBLE_ASSIGNEES);
   }
 
   isAssigneeSelected(assignee: string): boolean {
@@ -420,44 +426,133 @@ export class TaskListComponent implements OnInit, OnDestroy {
     const selected = this.selectedIssues();
     if (selected.length === 0) return;
     
-    const message = `Are you sure you want to delete ${selected.length} issue(s)?`;
-    if (confirm(message)) {
-      // TODO: Implement bulk delete
-      this.snackBar.open(`Deleted ${selected.length} issue(s)`, 'OK', { duration: 3000 });
-      this.selectedIssues.set([])
-    }
+    const dialogData: ConfirmDialogData = {
+      title: 'Confirm Delete',
+      message: `Are you sure you want to delete ${selected.length} issue(s)? This action cannot be undone.`,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      confirmColor: 'warn'
+    };
+
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: '400px',
+      data: dialogData
+    });
+
+    dialogRef.afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((confirmed: boolean) => {
+        if (confirmed) {
+          const deletePromises = selected
+            .filter(task => task.id !== undefined)
+            .map(task => this.taskService.deleteTask(task.id!).toPromise());
+          
+          Promise.all(deletePromises)
+            .then(() => {
+              this.snackBar.open(`Deleted ${selected.length} issue(s)`, 'OK', { duration: 3000 });
+              this.selectedIssues.set([]);
+              this.refreshIssues();
+            })
+            .catch((error) => {
+              this.snackBar.open('Failed to delete some issues', 'OK', { duration: 3000 });
+              console.error('Bulk delete error:', error);
+              this.refreshIssues();
+            });
+        }
+      });
   }
 
   // Individual issue operations
   duplicateIssue(task: Task): void {
-    const duplicatedTask = { ...task, id: undefined, title: `Copy of ${task.title}` };
-    // TODO: Implement task duplication
-    this.snackBar.open('Issue duplicated', 'OK', { duration: 3000 });
+    if (!task.id) {
+      this.snackBar.open('Cannot duplicate task without ID', 'OK', { duration: 3000 });
+      return;
+    }
+
+    const duplicatedTask: CreateTaskRequest = {
+      title: `Copy of ${task.title}`,
+      summary: `Copy of ${task.title}`,
+      description: task.description || '',
+      status: task.status,
+      priority: task.priority,
+      assignee: task.assignee,
+      estimatedHours: task.estimatedHours,
+      tags: task.tags,
+      createdBy: task.createdBy
+    };
+
+    this.taskService.createTask(duplicatedTask)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.snackBar.open('Issue duplicated successfully', 'OK', { duration: 3000 });
+          this.refreshIssues();
+        },
+        error: (error) => {
+          this.snackBar.open('Failed to duplicate issue', 'OK', { duration: 3000 });
+          console.error('Duplicate error:', error);
+        }
+      });
   }
 
   deleteIssue(task: Task): void {
-    if (confirm('Are you sure you want to delete this issue?')) {
-      this.taskService.deleteTask(task.id!).subscribe({
-        next: () => {
-          this.snackBar.open('Issue deleted', 'OK', { duration: 3000 });
-      this.refreshIssues();
-        },
-        error: (error) => {
-          this.snackBar.open('Failed to delete issue', 'OK', { duration: 3000 });
-          console.error('Delete error:', error);
+    if (!task.id) {
+      this.snackBar.open('Cannot delete task without ID', 'OK', { duration: 3000 });
+      return;
+    }
+
+    const dialogData: ConfirmDialogData = {
+      title: 'Confirm Delete',
+      message: `Are you sure you want to delete "${task.title}"? This action cannot be undone.`,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      confirmColor: 'warn'
+    };
+
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: '400px',
+      data: dialogData
+    });
+
+    dialogRef.afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((confirmed: boolean) => {
+        if (confirmed && task.id) {
+          this.taskService.deleteTask(task.id)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+              next: () => {
+                this.snackBar.open('Issue deleted successfully', 'OK', { duration: 3000 });
+                this.refreshIssues();
+              },
+              error: (error) => {
+                const errorMessage = error?.message || 'Unknown error occurred';
+                this.snackBar.open(`Failed to delete issue: ${errorMessage}`, 'OK', { duration: 5000 });
+                console.error('Delete error:', error);
+              }
+            });
         }
       });
-    }
   }
 
   changeStatus(task: Task, newStatus: TaskStatus): void {
-    if (task.status === newStatus || !task.id || task.version === undefined) return;
+    if (task.status === newStatus) return;
+    
+    if (!task.id) {
+      this.snackBar.open('Cannot update task without ID', 'OK', { duration: 3000 });
+      return;
+    }
 
-    const updateRequest = {
+    if (task.version === undefined) {
+      this.snackBar.open('Cannot update task without version number', 'OK', { duration: 3000 });
+      return;
+    }
+
+    const updateRequest: UpdateTaskRequest = {
       id: task.id,
       title: task.title,
       summary: task.title,
-      description: task.description,
+      description: task.description || '',
       status: newStatus,
       priority: task.priority,
       assignee: task.assignee,
@@ -467,16 +562,20 @@ export class TaskListComponent implements OnInit, OnDestroy {
       updatedBy: task.updatedBy
     };
 
-    this.taskService.updateTask(updateRequest).subscribe({
-      next: () => {
-        this.snackBar.open(`Issue moved to ${TaskUtils.getStatusDisplay(newStatus).displayName}`, 'OK', { duration: 3000 });
-        this.refreshIssues();
-      },
-      error: (error) => {
-        this.snackBar.open('Failed to update issue status', 'OK', { duration: 3000 });
-        console.error('Status update error:', error);
-      }
-    });
+    this.taskService.updateTask(updateRequest)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          const statusDisplay = TaskUtils.getStatusDisplay(newStatus).displayName;
+          this.snackBar.open(`Issue moved to ${statusDisplay}`, 'OK', { duration: 3000 });
+          this.refreshIssues();
+        },
+        error: (error) => {
+          const errorMessage = error?.message || 'Unknown error occurred';
+          this.snackBar.open(`Failed to update issue status: ${errorMessage}`, 'OK', { duration: 5000 });
+          console.error('Status update error:', error);
+        }
+      });
   }
 
   // Task panel methods
@@ -529,7 +628,7 @@ export class TaskListComponent implements OnInit, OnDestroy {
     return TaskUtils.getStatusDisplay(status).displayName;
   }
 
-  getTaskTags(tags: string | string[]): string[] {
+  getTaskTags(tags: string | string[] | undefined): string[] {
     if (Array.isArray(tags)) {
       return tags;
     }
@@ -540,8 +639,7 @@ export class TaskListComponent implements OnInit, OnDestroy {
   }
 
   isTaskOverdue(task: Task): boolean {
-    // Mock implementation - you can add actual due date logic here
-    return false;
+    return IssueUtils.isOverdue(task);
   }
 
   formatRelativeTime(timestamp: string): string {
@@ -578,10 +676,12 @@ export class TaskListComponent implements OnInit, OnDestroy {
       } as TaskEditorData
     });
 
-    dialogRef.afterClosed().subscribe(result => {
-      // Always refresh the list when dialog closes to ensure consistency
-      this.refreshIssues();
-    });
+    dialogRef.afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(result => {
+        // Always refresh the list when dialog closes to ensure consistency
+        this.refreshIssues();
+      });
   }
 
   openTaskEditor(task: Task): void {
@@ -599,16 +699,18 @@ export class TaskListComponent implements OnInit, OnDestroy {
       } as TaskEditorData
     });
 
-    dialogRef.afterClosed().subscribe(result => {
-      // Check if task was actually updated and refresh accordingly
-      if (result && typeof result === 'object' && result.id) {
-        // Task was successfully updated
-        this.refreshIssues();
-      } else if (result === 'refresh') {
-        // Explicit refresh request (e.g., after conflict resolution)
-        this.refreshIssues();
-      }
-      // For other cases (cancel, no changes), don't refresh unnecessarily
-    });
+    dialogRef.afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(result => {
+        // Check if task was actually updated and refresh accordingly
+        if (result && typeof result === 'object' && result.id) {
+          // Task was successfully updated
+          this.refreshIssues();
+        } else if (result === 'refresh') {
+          // Explicit refresh request (e.g., after conflict resolution)
+          this.refreshIssues();
+        }
+        // For other cases (cancel, no changes), don't refresh unnecessarily
+      });
   }
 } 

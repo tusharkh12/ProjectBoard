@@ -1,6 +1,9 @@
 package com.projectboard.service;
 
-import com.projectboard.dto.TaskDTO;
+import com.projectboard.dto.TaskResponse;
+import com.projectboard.dto.TaskCreateRequest;
+import com.projectboard.dto.TaskUpdateRequest;
+import com.projectboard.dto.TaskMapper;
 import com.projectboard.entity.Task;
 import com.projectboard.entity.Task.TaskStatus;
 import com.projectboard.entity.Task.TaskPriority;
@@ -34,7 +37,6 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@Transactional
 public class TaskService {
 
     private final TaskRepository taskRepository;
@@ -42,8 +44,8 @@ public class TaskService {
     /**
      * Get all tasks
      */
-    @Transactional(readOnly = true)
-    public List<TaskDTO.Response> getAllTasks() {
+    @Transactional(readOnly = true, isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
+    public List<TaskResponse> getAllTasks() {
         log.info("Service: Getting all tasks");
         List<Task> tasks = taskRepository.findAll();
         return tasks.stream()
@@ -54,8 +56,8 @@ public class TaskService {
     /**
      * Get paginated tasks
      */
-    @Transactional(readOnly = true)
-    public Page<TaskDTO.Response> getTasksPage(Pageable pageable) {
+    @Transactional(readOnly = true, isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
+    public Page<TaskResponse> getTasksPage(Pageable pageable) {
         log.info("Service: Getting tasks page - Page: {}, Size: {}", pageable.getPageNumber(), pageable.getPageSize());
         Page<Task> taskPage = taskRepository.findAll(pageable);
         return taskPage.map(this::convertToResponseDTO);
@@ -64,8 +66,8 @@ public class TaskService {
     /**
      * Get task by ID
      */
-    @Transactional(readOnly = true)
-    public TaskDTO.Response getTaskById(Long id) {
+    @Transactional(readOnly = true, isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
+    public TaskResponse getTaskById(Long id) {
         log.info("Service: Getting task by ID: {}", id);
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new TaskNotFoundException("Task not found with ID: " + id));
@@ -75,14 +77,25 @@ public class TaskService {
     /**
      * Create new task
      */
-    public TaskDTO.Response createTask(TaskDTO.CreateRequest request) {
+    @Transactional(isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
+    public TaskResponse createTask(TaskCreateRequest request) {
         log.info("Service: Creating new task: {}", request.getTitle());
+
+        TaskStatus status;
+        TaskPriority priority;
+        try {
+            status = TaskStatus.valueOf(request.getStatus());
+            priority = TaskPriority.valueOf(request.getPriority());
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid enum value in create request: {}", e.getMessage());
+            throw new IllegalArgumentException("Invalid status or priority value");
+        }
 
         Task task = Task.builder()
                 .title(request.getTitle())
                 .description(request.getDescription())
-                .status(TaskStatus.valueOf(request.getStatus()))
-                .priority(TaskPriority.valueOf(request.getPriority()))
+                .status(status)
+                .priority(priority)
                 .assignee(request.getAssignee())
                 .estimatedHours(request.getEstimatedHours())
                 .tags(request.getTags())
@@ -99,7 +112,8 @@ public class TaskService {
     /**
      * Update task with optimistic locking
      */
-    public TaskDTO.Response updateTask(Long id, TaskDTO.UpdateRequest request) {
+    @Transactional(isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
+    public TaskResponse updateTask(Long id, TaskUpdateRequest request) {
         log.info("Service: Updating task with ID: {}", id);
 
         try {
@@ -118,11 +132,22 @@ public class TaskService {
                 );
             }
 
+            // Validate and convert enum values
+            TaskStatus status;
+            TaskPriority priority;
+            try {
+                status = TaskStatus.valueOf(request.getStatus());
+                priority = TaskPriority.valueOf(request.getPriority());
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid enum value in update request: {}", e.getMessage());
+                throw new IllegalArgumentException("Invalid status or priority value");
+            }
+
             // Update fields
             existingTask.setTitle(request.getTitle());
             existingTask.setDescription(request.getDescription());
-            existingTask.setStatus(TaskStatus.valueOf(request.getStatus()));
-            existingTask.setPriority(TaskPriority.valueOf(request.getPriority()));
+            existingTask.setStatus(status);
+            existingTask.setPriority(priority);
             existingTask.setAssignee(request.getAssignee());
             existingTask.setEstimatedHours(request.getEstimatedHours());
             existingTask.setTags(request.getTags());
@@ -150,6 +175,7 @@ public class TaskService {
     /**
      * Delete task
      */
+    @Transactional(isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
     public void deleteTask(Long id) {
         log.info("Service: Deleting task with ID: {}", id);
 
@@ -163,22 +189,39 @@ public class TaskService {
 
     /**
      * Search tasks with criteria
+     * Uses database query for better performance
      */
-    @Transactional(readOnly = true)
-    public List<TaskDTO.Response> searchTasks(String status, String priority, String assignee, String searchTerm) {
+    @Transactional(readOnly = true, isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
+    public List<TaskResponse> searchTasks(String status, String priority, String assignee, String searchTerm) {
         log.info("Service: Searching tasks - Status: {}, Priority: {}, Assignee: {}, SearchTerm: {}",
                 status, priority, assignee, searchTerm);
 
-        List<Task> allTasks = taskRepository.findAll();
+        // Convert string enums to enum types if provided
+        TaskStatus taskStatus = null;
+        TaskPriority taskPriority = null;
+        
+        if (status != null) {
+            try {
+                taskStatus = TaskStatus.valueOf(status);
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid status value in search: {}", status);
+                throw new IllegalArgumentException("Invalid status: " + status + ". Valid values: BACKLOG, IN_PROGRESS, REVIEW, TESTING, DONE");
+            }
+        }
+        
+        if (priority != null) {
+            try {
+                taskPriority = TaskPriority.valueOf(priority);
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid priority value in search: {}", priority);
+                throw new IllegalArgumentException("Invalid priority: " + priority + ". Valid values: LOW, MEDIUM, HIGH, CRITICAL");
+            }
+        }
 
-        return allTasks.stream()
-                .filter(task -> status == null || task.getStatus().name().equals(status))
-                .filter(task -> priority == null || task.getPriority().name().equals(priority))
-                .filter(task -> assignee == null ||
-                        (task.getAssignee() != null && task.getAssignee().toLowerCase().contains(assignee.toLowerCase())))
-                .filter(task -> searchTerm == null ||
-                        task.getTitle().toLowerCase().contains(searchTerm.toLowerCase()) ||
-                        task.getDescription().toLowerCase().contains(searchTerm.toLowerCase()))
+        // Use repository query method for efficient database-level filtering
+        List<Task> tasks = taskRepository.findTasksByCriteria(taskStatus, taskPriority, assignee, searchTerm);
+
+        return tasks.stream()
                 .map(this::convertToResponseDTO)
                 .collect(Collectors.toList());
     }
@@ -186,43 +229,64 @@ public class TaskService {
     /**
      * Get tasks by status
      */
-    @Transactional(readOnly = true)
-    public List<TaskDTO.Response> getTasksByStatus(String status) {
+    @Transactional(readOnly = true, isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
+    public List<TaskResponse> getTasksByStatus(String status) {
         log.info("Service: Getting tasks by status: {}", status);
-        TaskStatus taskStatus = TaskStatus.valueOf(status);
-        List<Task> tasks = taskRepository.findByStatus(taskStatus);
-        return tasks.stream()
-                .map(this::convertToResponseDTO)
-                .collect(Collectors.toList());
+        try {
+            TaskStatus taskStatus = TaskStatus.valueOf(status);
+            List<Task> tasks = taskRepository.findByStatus(taskStatus);
+            return tasks.stream()
+                    .map(this::convertToResponseDTO)
+                    .collect(Collectors.toList());
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid status value: {}", status);
+            throw new IllegalArgumentException("Invalid status: " + status + ". Valid values: BACKLOG, IN_PROGRESS, REVIEW, TESTING, DONE");
+        }
     }
 
     /**
      * Get tasks by priority
      */
-    @Transactional(readOnly = true)
-    public List<TaskDTO.Response> getTasksByPriority(String priority) {
+    @Transactional(readOnly = true, isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
+    public List<TaskResponse> getTasksByPriority(String priority) {
         log.info("Service: Getting tasks by priority: {}", priority);
-        TaskPriority taskPriority = TaskPriority.valueOf(priority);
-        List<Task> tasks = taskRepository.findByPriority(taskPriority);
-        return tasks.stream()
-                .map(this::convertToResponseDTO)
-                .collect(Collectors.toList());
+        try {
+            TaskPriority taskPriority = TaskPriority.valueOf(priority);
+            List<Task> tasks = taskRepository.findByPriority(taskPriority);
+            return tasks.stream()
+                    .map(this::convertToResponseDTO)
+                    .collect(Collectors.toList());
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid priority value: {}", priority);
+            throw new IllegalArgumentException("Invalid priority: " + priority + ". Valid values: LOW, MEDIUM, HIGH, CRITICAL");
+        }
     }
 
     /**
      * Get task statistics
+     * Uses in-memory aggregation (acceptable for small-medium datasets)
+     * For large datasets, consider using native SQL aggregation queries
      */
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
     public Map<String, Object> getStatistics() {
         log.info("Service: Getting task statistics");
 
+        // Load all tasks - for better performance with large datasets, use native aggregation queries
         List<Task> allTasks = taskRepository.findAll();
+        long totalTasks = allTasks.size();
 
         Map<String, Object> statistics = new HashMap<>();
-
-        // Basic counts
-        statistics.put("totalTasks", allTasks.size());
+        statistics.put("totalTasks", totalTasks);
         statistics.put("timestamp", LocalDateTime.now());
+
+        if (totalTasks == 0) {
+            statistics.put("byStatus", Map.of());
+            statistics.put("byPriority", Map.of());
+            statistics.put("byAssignee", Map.of());
+            statistics.put("completionRate", 0.0);
+            statistics.put("totalEstimatedHours", 0.0);
+            return statistics;
+        }
 
         // Status distribution
         Map<String, Long> statusCounts = allTasks.stream()
@@ -251,7 +315,7 @@ public class TaskService {
 
         // Progress metrics
         long completedTasks = statusCounts.getOrDefault("DONE", 0L);
-        double completionRate = allTasks.isEmpty() ? 0.0 : (double) completedTasks / allTasks.size() * 100;
+        double completionRate = (double) completedTasks / totalTasks * 100;
         statistics.put("completionRate", Math.round(completionRate * 100.0) / 100.0);
 
         // Estimated hours
@@ -262,7 +326,7 @@ public class TaskService {
         statistics.put("totalEstimatedHours", totalEstimatedHours);
 
         log.info("Service: Statistics calculated - Total tasks: {}, Completion rate: {}%",
-                allTasks.size(), completionRate);
+                totalTasks, completionRate);
 
         return statistics;
     }
@@ -270,10 +334,17 @@ public class TaskService {
     /**
      * Bulk update task status
      */
-    public List<TaskDTO.Response> bulkUpdateStatus(List<Long> taskIds, String newStatus) {
+    @Transactional(isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
+    public List<TaskResponse> bulkUpdateStatus(List<Long> taskIds, String newStatus) {
         log.info("Service: Bulk updating {} tasks to status: {}", taskIds.size(), newStatus);
 
-        TaskStatus status = TaskStatus.valueOf(newStatus);
+        TaskStatus status;
+        try {
+            status = TaskStatus.valueOf(newStatus);
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid status value in bulk update: {}", newStatus);
+            throw new IllegalArgumentException("Invalid status: " + newStatus);
+        }
         List<Task> tasks = taskRepository.findAllById(taskIds);
 
         tasks.forEach(task -> {
@@ -292,8 +363,8 @@ public class TaskService {
     /**
      * Get fresh task data for conflict resolution
      */
-    @Transactional(readOnly = true)
-    public TaskDTO.Response getFreshTaskData(Long id) {
+    @Transactional(readOnly = true, isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
+    public TaskResponse getFreshTaskData(Long id) {
         log.info("Service: Getting fresh task data for ID: {}", id);
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new TaskNotFoundException("Task not found with ID: " + id));
@@ -303,7 +374,7 @@ public class TaskService {
     /**
      * Check for conflicts before update
      */
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
     public Map<String, Object> checkForConflicts(Long id, String lastFetchedStr) {
         log.info("Service: Checking for conflicts for task ID: {} since: {}", id, lastFetchedStr);
 
@@ -339,14 +410,21 @@ public class TaskService {
     /**
      * Convert Task entity to Response DTO
      */
-    private TaskDTO.Response convertToResponseDTO(Task task) {
-        return TaskDTO.fromEntity(task);
+    private TaskResponse convertToResponseDTO(Task task) {
+        return TaskMapper.toResponse(task);
     }
 
     /**
-     * Helper to get the current username - simplified without security for this demo.
+     * Helper to get the current username from security context
      */
     private String getCurrentUsername() {
-        return "system";
+        org.springframework.security.core.Authentication authentication = 
+                org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        
+        if (authentication != null && authentication.isAuthenticated()) {
+            return authentication.getName();
+        }
+        
+        return "system"; // Fallback for non-authenticated requests (if any)
     }
 }

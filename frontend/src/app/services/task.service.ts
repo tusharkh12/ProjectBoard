@@ -272,7 +272,7 @@ export class TaskService {
    * Update search criteria and reload tasks
    */
   updateSearchCriteria(criteria: TaskSearchCriteria): void {
-    console.log('TaskService - Received search criteria:', criteria); // Debug log
+    console.log('TaskService - Received search criteria:', criteria);
     this._searchCriteria.set(criteria);
     this.loadTasks().subscribe();
   }

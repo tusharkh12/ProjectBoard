@@ -1,4 +1,5 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
@@ -17,10 +18,11 @@ import { MatDividerModule } from '@angular/material/divider';
 import { DragDropModule, CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 
 import { TaskService } from '../../services/task.service';
-import { Task, TaskStatus, TaskPriority } from '../../models/task.model';
+import { Task, TaskStatus, TaskPriority, ConflictErrorResponse } from '../../models/task.model';
 import { TaskUtils, IssueUtils } from '../../models/task.model';
 import { TaskPanelComponent } from '../../components/task-panel/task-panel.component';
 import { TaskEditorComponent, TaskEditorData } from '../../components/task-editor/task-editor.component';
+import { ConfirmDialogComponent, ConfirmDialogData } from '../../components/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-project-board',
@@ -52,6 +54,7 @@ export class SprintBoardComponent implements OnInit {
   private readonly snackBar = inject(MatSnackBar);
   private readonly dialog = inject(MatDialog);
   private readonly fb = inject(FormBuilder);
+  private readonly destroyRef = inject(DestroyRef);
 
   // Expose for template
   readonly TaskStatus = TaskStatus;
@@ -65,21 +68,20 @@ export class SprintBoardComponent implements OnInit {
     priority: ['']
   });
 
-  // Kanban column configuration
-  readonly kanbanStatuses = signal([
+  readonly kanbanStatuses = [
     { value: TaskStatus.BACKLOG, label: TaskUtils.getStatusDisplay(TaskStatus.BACKLOG).displayName },
     { value: TaskStatus.IN_PROGRESS, label: TaskUtils.getStatusDisplay(TaskStatus.IN_PROGRESS).displayName },
     { value: TaskStatus.REVIEW, label: TaskUtils.getStatusDisplay(TaskStatus.REVIEW).displayName },
     { value: TaskStatus.TESTING, label: TaskUtils.getStatusDisplay(TaskStatus.TESTING).displayName },
     { value: TaskStatus.DONE, label: TaskUtils.getStatusDisplay(TaskStatus.DONE).displayName }
-  ]);
+  ] as const;
 
-  readonly priorityOptions = signal([
+  readonly priorityOptions = [
     { value: TaskPriority.LOW, label: TaskUtils.getPriorityDisplay(TaskPriority.LOW).displayName },
     { value: TaskPriority.MEDIUM, label: TaskUtils.getPriorityDisplay(TaskPriority.MEDIUM).displayName },
     { value: TaskPriority.HIGH, label: TaskUtils.getPriorityDisplay(TaskPriority.HIGH).displayName },
     { value: TaskPriority.CRITICAL, label: TaskUtils.getPriorityDisplay(TaskPriority.CRITICAL).displayName }
-  ]);
+  ] as const;
 
   // Multi-select filter states
   readonly selectedAssignees = signal<string[]>([]);
@@ -96,14 +98,14 @@ export class SprintBoardComponent implements OnInit {
   readonly selectedTaskId = signal<number | null>(null);
   readonly isPanelOpen = signal(false);
 
-  readonly sortOptions = signal([
+  readonly sortOptions = [
     { value: 'created', label: 'Created Date', icon: 'schedule' },
     { value: 'updated', label: 'Updated Date', icon: 'update' },
     { value: 'priority', label: 'Priority', icon: 'flag' },
     { value: 'title', label: 'Title', icon: 'sort_by_alpha' },
     { value: 'assignee', label: 'Assignee', icon: 'person' },
     { value: 'status', label: 'Status', icon: 'assignment' }
-  ]);
+  ] as const;
 
   // Computed signals
   readonly getHighPriorityCount = computed(() => {
@@ -154,14 +156,16 @@ export class SprintBoardComponent implements OnInit {
   }
 
   refreshBoard(): void {
-    this.taskService.loadTasks().subscribe({
-      next: (tasks) => {
-        // Board refreshed successfully
-      },
-      error: (error) => {
-        this.snackBar.open(`Error refreshing board: ${error.message}`, 'Close', { duration: 5000 });
-      }
-    });
+    this.taskService.loadTasks()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          // Board refreshed successfully
+        },
+        error: (error) => {
+          this.snackBar.open(`Error refreshing board: ${error.message}`, 'Close', { duration: 5000 });
+        }
+      });
   }
 
   updateSearch(event: Event): void {
@@ -214,7 +218,7 @@ export class SprintBoardComponent implements OnInit {
   }
 
   getAllDropListIds(): string[] {
-    return this.kanbanStatuses().map(status => this.getDropListId(status.value));
+    return this.kanbanStatuses.map(status => this.getDropListId(status.value));
   }
 
   onTaskDrop(event: CdkDragDrop<Task[]>): void {
@@ -303,32 +307,36 @@ export class SprintBoardComponent implements OnInit {
       estimatedHours: task.estimatedHours,
       tags: task.tags,
       version: task.version || 0
-    }).subscribe({
-      next: () => {
-        const statusDisplay = TaskUtils.getStatusDisplay(newStatus).displayName;
-        this.snackBar.open(`Issue moved to ${statusDisplay}`, 'Close', { duration: 2000 });
-      },
-      error: (error) => {
-        console.error('Error updating task status:', error);
-        this.refreshBoard();
-        if (error.error && error.error.error === 'OPTIMISTIC_LOCK_CONFLICT') {
-          this.handleOptimisticLockConflict(error.error);
-        } else {
-          this.snackBar.open(`Failed to update issue status: ${error.message || 'Unknown error'}`, 'Close', { duration: 5000 });
+    })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          const statusDisplay = TaskUtils.getStatusDisplay(newStatus).displayName;
+          this.snackBar.open(`Issue moved to ${statusDisplay}`, 'Close', { duration: 2000 });
+        },
+        error: (error) => {
+          console.error('Error updating task status:', error);
+          this.refreshBoard();
+          if (error.error && error.error.error === 'OPTIMISTIC_LOCK_CONFLICT') {
+            this.handleOptimisticLockConflict(error.error);
+          } else {
+            this.snackBar.open(`Failed to update issue status: ${error.message || 'Unknown error'}`, 'Close', { duration: 5000 });
+          }
         }
-      }
-    });
+      });
   }
 
-  private handleOptimisticLockConflict(errorResponse: any): void {
-    const currentTask = errorResponse.currentTaskData;
+  private handleOptimisticLockConflict(errorResponse: ConflictErrorResponse): void {
+    const currentTask = errorResponse.currentData;
     this.snackBar.open(
       `Conflict detected! Issue "${currentTask.title}" was modified by another user.`,
       'Refresh',
       { duration: 10000 }
-    ).onAction().subscribe(() => {
-      this.refreshBoard();
-    });
+    ).onAction()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.refreshBoard();
+      });
   }
 
   addTaskToColumn(status: TaskStatus): void {
@@ -357,10 +365,36 @@ export class SprintBoardComponent implements OnInit {
   }
 
   deleteTask(task: Task): void {
-    if (confirm(`Are you sure you want to delete "${task.title}"?`)) {
-      // Implement delete logic
-      this.snackBar.open(`Issue deleted: ${task.title}`, 'Close', { duration: 2000 });
-    }
+    const dialogData: ConfirmDialogData = {
+      title: 'Confirm Delete',
+      message: `Are you sure you want to delete "${task.title}"? This action cannot be undone.`,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      confirmColor: 'warn'
+    };
+
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: '400px',
+      data: dialogData
+    });
+
+    dialogRef.afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((confirmed: boolean) => {
+        if (confirmed && task.id) {
+          this.taskService.deleteTask(task.id)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+              next: () => {
+                this.snackBar.open(`Issue deleted: ${task.title}`, 'Close', { duration: 2000 });
+              },
+              error: (error) => {
+                this.snackBar.open('Failed to delete issue', 'Close', { duration: 3000 });
+                console.error('Delete error:', error);
+              }
+            });
+        }
+      });
   }
 
   getTaskTags(tags: string | undefined): readonly string[] {
@@ -457,7 +491,7 @@ export class SprintBoardComponent implements OnInit {
 
   // Sort and view methods
   getCurrentSortLabel(): string {
-    const option = this.sortOptions().find(opt => opt.value === this.currentSort());
+    const option = this.sortOptions.find(opt => opt.value === this.currentSort());
     return option ? option.label : 'Created Date';
   }
 

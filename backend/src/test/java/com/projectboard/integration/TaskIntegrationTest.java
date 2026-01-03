@@ -1,7 +1,9 @@
 package com.projectboard.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.projectboard.dto.TaskDTO;
+import com.projectboard.dto.TaskResponse;
+import com.projectboard.dto.TaskCreateRequest;
+import com.projectboard.dto.TaskUpdateRequest;
 import com.projectboard.entity.Task;
 import com.projectboard.repository.TaskRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,7 +43,7 @@ class TaskIntegrationTest {
     @Autowired
     private TaskRepository taskRepository;
 
-    private TaskDTO.CreateRequest createRequest;
+    private TaskCreateRequest createRequest;
     private Task existingTask;
 
     @BeforeEach
@@ -49,7 +51,7 @@ class TaskIntegrationTest {
         // Clear database
         taskRepository.deleteAll();
 
-        createRequest = TaskDTO.CreateRequest.builder()
+        createRequest = TaskCreateRequest.builder()
                 .title("Integration Test Task")
                 .description("Testing full integration flow")
                 .status("BACKLOG")
@@ -90,7 +92,7 @@ class TaskIntegrationTest {
                 .getContentAsString();
 
         // Extract created task ID
-        TaskDTO.Response createdTask = objectMapper.readValue(createResponse, TaskDTO.Response.class);
+        TaskResponse createdTask = objectMapper.readValue(createResponse, TaskResponse.class);
         Long taskId = createdTask.getId();
 
         // Step 2: Read Task
@@ -101,7 +103,7 @@ class TaskIntegrationTest {
                 .andExpect(jsonPath("$.assignee", is("Integration Tester")));
 
         // Step 3: Update Task
-        TaskDTO.UpdateRequest updateRequest = TaskDTO.UpdateRequest.builder()
+        TaskUpdateRequest updateRequest = TaskUpdateRequest.builder()
                 .title("Updated Integration Task")
                 .description("Updated description via integration test")
                 .status("IN_PROGRESS")
@@ -156,7 +158,7 @@ class TaskIntegrationTest {
         Long newVersion = modifiedTask.getVersion();
 
         // Step 3: Attempt to update with stale version
-        TaskDTO.UpdateRequest staleUpdateRequest = TaskDTO.UpdateRequest.builder()
+        TaskUpdateRequest staleUpdateRequest = TaskUpdateRequest.builder()
                 .title("My Update")
                 .description("My changes")
                 .status("DONE")
@@ -341,7 +343,7 @@ class TaskIntegrationTest {
     @DisplayName("Error Handling Integration Test - Invalid Requests")
     void errorHandlingIntegration_InvalidRequests() throws Exception {
         // Test 1: Create task with missing required fields
-        TaskDTO.CreateRequest invalidRequest = TaskDTO.CreateRequest.builder()
+        TaskCreateRequest invalidRequest = TaskCreateRequest.builder()
                 .description("Missing title")
                 .build();
 
@@ -355,7 +357,7 @@ class TaskIntegrationTest {
                 .andExpect(status().isNotFound());
 
         // Test 3: Update non-existent task
-        TaskDTO.UpdateRequest updateRequest = TaskDTO.UpdateRequest.builder()
+        TaskUpdateRequest updateRequest = TaskUpdateRequest.builder()
                 .title("Update Non-existent")
                 .status("DONE")
                 .priority("LOW")

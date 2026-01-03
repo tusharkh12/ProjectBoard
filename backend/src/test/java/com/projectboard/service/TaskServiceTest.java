@@ -1,6 +1,8 @@
 package com.projectboard.service;
 
-import com.projectboard.dto.TaskDTO;
+import com.projectboard.dto.TaskResponse;
+import com.projectboard.dto.TaskCreateRequest;
+import com.projectboard.dto.TaskUpdateRequest;
 import com.projectboard.entity.Task;
 import com.projectboard.exception.OptimisticLockingException;
 import com.projectboard.exception.TaskNotFoundException;
@@ -39,8 +41,8 @@ class TaskServiceTest {
     private TaskService taskService;
 
     private Task sampleTask;
-    private TaskDTO.CreateRequest createRequest;
-    private TaskDTO.UpdateRequest updateRequest;
+    private TaskCreateRequest createRequest;
+    private TaskUpdateRequest updateRequest;
 
     @BeforeEach
     void setUp() {
@@ -60,7 +62,7 @@ class TaskServiceTest {
                 .updatedBy("system")
                 .build();
 
-        createRequest = TaskDTO.CreateRequest.builder()
+        createRequest = TaskCreateRequest.builder()
                 .title("New Task")
                 .description("New task description")
                 .status("BACKLOG")
@@ -70,7 +72,7 @@ class TaskServiceTest {
                 .tags("frontend,ui")
                 .build();
 
-        updateRequest = TaskDTO.UpdateRequest.builder()
+        updateRequest = TaskUpdateRequest.builder()
                 .title("Updated Task")
                 .description("Updated description")
                 .status("IN_PROGRESS")
@@ -88,7 +90,7 @@ class TaskServiceTest {
         List<Task> tasks = Arrays.asList(sampleTask);
         when(taskRepository.findAll()).thenReturn(tasks);
 
-        List<TaskDTO.Response> result = taskService.getAllTasks();
+        List<TaskResponse> result = taskService.getAllTasks();
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getTitle()).isEqualTo("Sample Task");
@@ -101,7 +103,7 @@ class TaskServiceTest {
     void getTaskById_Success() {
         when(taskRepository.findById(1L)).thenReturn(Optional.of(sampleTask));
 
-        TaskDTO.Response result = taskService.getTaskById(1L);
+        TaskResponse result = taskService.getTaskById(1L);
 
         assertThat(result).isNotNull();
         assertThat(result.getId()).isEqualTo(1L);
@@ -141,7 +143,7 @@ class TaskServiceTest {
 
         when(taskRepository.save(any(Task.class))).thenReturn(savedTask);
 
-        TaskDTO.Response result = taskService.createTask(createRequest);
+        TaskResponse result = taskService.createTask(createRequest);
 
         assertThat(result).isNotNull();
         assertThat(result.getId()).isEqualTo(2L);
@@ -174,7 +176,7 @@ class TaskServiceTest {
 
         when(taskRepository.save(any(Task.class))).thenReturn(updatedTask);
 
-        TaskDTO.Response result = taskService.updateTask(1L, updateRequest);
+        TaskResponse result = taskService.updateTask(1L, updateRequest);
 
         assertThat(result).isNotNull();
         assertThat(result.getTitle()).isEqualTo("Updated Task");
@@ -187,7 +189,7 @@ class TaskServiceTest {
     @Test
     @DisplayName("Should throw OptimisticLockingException when version mismatch")
     void updateTask_VersionMismatch() {
-        updateRequest = TaskDTO.UpdateRequest.builder()
+        updateRequest = TaskUpdateRequest.builder()
                 .title("Updated Task")
                 .description("Updated description")
                 .status("IN_PROGRESS")
@@ -267,7 +269,7 @@ class TaskServiceTest {
         List<Task> tasks = Arrays.asList(sampleTask);
         when(taskRepository.findAll()).thenReturn(tasks);
 
-        List<TaskDTO.Response> result = taskService.searchTasks(null, null, null, "Sample");
+        List<TaskResponse> result = taskService.searchTasks(null, null, null, "Sample");
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getTitle()).isEqualTo("Sample Task");

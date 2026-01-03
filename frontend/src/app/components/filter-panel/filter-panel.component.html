@@ -24,7 +24,7 @@
           }
         </div>
         <div class="status-chips">
-          @for(status of parent.availableStatuses(); track status.value) {
+          @for(status of parent.availableStatuses; track status.value) {
             <button class="enhanced-chip status-chip"
                     [class.active]="parent.isStatusSelected(status.value)"
                     [attr.data-status]="status.value"
@@ -53,7 +53,7 @@
           }
         </div>
         <div class="priority-chips">
-          @for(priority of parent.availablePriorities(); track priority.value) {
+          @for(priority of parent.availablePriorities; track priority.value) {
             <button class="enhanced-chip priority-chip"
                     [class.active]="parent.isPrioritySelected(priority.value)"
                     [attr.data-priority]="priority.value"
@@ -82,7 +82,7 @@
           </div>
           <div class="sort-controls">
             <select class="enhanced-select" [value]="parent.sortBy()" (change)="onSortChange($event)">
-              @for(option of parent.sortOptions(); track option.value) {
+              @for(option of parent.sortOptions; track option.value) {
                 <option [value]="option.value">{{ option.label }}</option>
               }
             </select>

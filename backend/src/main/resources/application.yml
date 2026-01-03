@@ -7,34 +7,41 @@ spring:
   application:
     name: ProjectBoard Backend
     
-  # H2 Database Configuration
+  # MySQL Database Configuration
   datasource:
-    url: jdbc:h2:mem:projectboard;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    driverClassName: org.h2.Driver
-    username: sa
-    password: password
-    
-  # H2 Console (for development)
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
-      settings:
-        web-allow-others: true
+    url: jdbc:mysql://localhost:3306/projectboard?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    driverClassName: com.mysql.cj.jdbc.Driver
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:password}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+      idle-timeout: 300000
+      max-lifetime: 900000
+      leak-detection-threshold: 60000
+      connection-test-query: SELECT 1
         
   # JPA Configuration
   jpa:
-    database-platform: org.hibernate.dialect.H2Dialect
+    database-platform: org.hibernate.dialect.MySQLDialect
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
     show-sql: true
     format-sql: true
-    defer-datasource-initialization: true
-    
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          batch_size: 20
+        connection:
+          isolation: 2  # READ_COMMITTED isolation level
+        
   # SQL Script Initialization
+  # Set to 'never' to prevent re-insertion on every restart
   sql:
     init:
-      mode: always
+      mode: never
       data-locations: classpath:data.sql
       
   # Jackson Configuration
@@ -50,10 +57,9 @@ spring:
 # Logging Configuration
 logging:
   level:
-    com.projectboard: DEBUG
-    org.springframework.web: DEBUG
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    com.projectboard: INFO
+    org.springframework.web: INFO
+    org.hibernate.SQL: WARN
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
@@ -80,3 +86,8 @@ projectboard:
 app:
   cors:
     origins: http://localhost:4200
+
+# JWT Configuration
+jwt:
+  secret: ${JWT_SECRET:mySecretKeyForJWTTokenGenerationMustBeAtLeast256BitsLongForHS512Algorithm}
+  expiration: ${JWT_EXPIRATION:86400000} # 24 hours in milliseconds

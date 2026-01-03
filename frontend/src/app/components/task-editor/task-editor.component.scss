@@ -51,7 +51,7 @@
 
     .priority-indicator.priority-critical { background-color: var(--priority-critical, #9c27b0); }
     .priority-indicator.priority-high { background-color: var(--priority-high, #f44336); }
-    .priority-indicator.priority-medium { background-color: var(--priority-medium, #ff9800); }
+    .priority-indicator.priority-medium { background-color: var(--priority-medium, #0052cc); }
     .priority-indicator.priority-low { background-color: var(--priority-low, #4caf50); }
 
     .priority-indicator mat-icon {
@@ -360,7 +360,7 @@
     }
     
     .priority-icon.medium {
-      background: linear-gradient(135deg, #FFAB00 0%, #FFC400 100%);
+      background: linear-gradient(135deg, #0052cc 0%, #2684ff 100%);
     }
     
     .priority-icon.low {
@@ -384,12 +384,12 @@
 
     .priority-icon.priority-critical { color: var(--priority-critical, #9c27b0); }
     .priority-icon.priority-high { color: var(--priority-high, #f44336); }
-    .priority-icon.priority-medium { color: var(--priority-medium, #ff9800); }
+    .priority-icon.priority-medium { color: var(--priority-medium, #0052cc); }
     .priority-icon.priority-low { color: var(--priority-low, #4caf50); }
 
     .priority-text-critical { color: var(--priority-critical, #9c27b0); font-weight: 600; }
     .priority-text-high { color: var(--priority-high, #f44336); font-weight: 600; }
-    .priority-text-medium { color: var(--priority-medium, #ff9800); }
+    .priority-text-medium { color: var(--priority-medium, #0052cc); }
     .priority-text-low { color: var(--priority-low, #4caf50); }
 
     /* Assignee */
@@ -701,7 +701,7 @@
 
     .priority-badge.priority-critical { background: var(--priority-critical, #9c27b0); }
     .priority-badge.priority-high { background: var(--priority-high, #f44336); }
-    .priority-badge.priority-medium { background: var(--priority-medium, #ff9800); }
+    .priority-badge.priority-medium { background: var(--priority-medium, #0052cc); }
     .priority-badge.priority-low { background: var(--priority-low, #4caf50); }
 
     .priority-badge mat-icon {

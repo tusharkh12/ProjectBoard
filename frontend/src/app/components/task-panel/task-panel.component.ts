@@ -1,4 +1,5 @@
-import { Component, inject, input, output, signal, effect } from '@angular/core';
+import { Component, inject, input, output, signal, effect, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -18,6 +19,8 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 
 import { TaskService } from '../../services/task.service';
 import { Task, TaskStatus, TaskPriority, TaskUtils, IssueUtils, UpdateTaskRequest, ConflictErrorResponse } from '../../models/task.model';
+import { MatDialog } from '@angular/material/dialog';
+import { ConfirmDialogComponent, ConfirmDialogData } from '../confirm-dialog/confirm-dialog.component';
 
 export interface TaskPanelData {
   taskId: number;
@@ -61,6 +64,8 @@ export class TaskPanelComponent {
   readonly taskService = inject(TaskService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly fb = inject(FormBuilder);
+  private readonly dialog = inject(MatDialog);
+  private readonly destroyRef = inject(DestroyRef);
 
   // Input properties
   readonly taskId = input.required<number>();
@@ -90,21 +95,20 @@ export class TaskPanelComponent {
     tags: ['']
   });
 
-  // Options
-  readonly priorityOptions = signal([
+  readonly priorityOptions = [
     { value: TaskPriority.LOW, label: TaskUtils.getPriorityDisplay(TaskPriority.LOW).displayName },
     { value: TaskPriority.MEDIUM, label: TaskUtils.getPriorityDisplay(TaskPriority.MEDIUM).displayName },
     { value: TaskPriority.HIGH, label: TaskUtils.getPriorityDisplay(TaskPriority.HIGH).displayName },
     { value: TaskPriority.CRITICAL, label: TaskUtils.getPriorityDisplay(TaskPriority.CRITICAL).displayName }
-  ]);
+  ] as const;
 
-  readonly statusOptions = signal([
+  readonly statusOptions = [
     { value: TaskStatus.BACKLOG, label: TaskUtils.getStatusDisplay(TaskStatus.BACKLOG).displayName },
     { value: TaskStatus.IN_PROGRESS, label: TaskUtils.getStatusDisplay(TaskStatus.IN_PROGRESS).displayName },
     { value: TaskStatus.REVIEW, label: TaskUtils.getStatusDisplay(TaskStatus.REVIEW).displayName },
     { value: TaskStatus.TESTING, label: TaskUtils.getStatusDisplay(TaskStatus.TESTING).displayName },
     { value: TaskStatus.DONE, label: TaskUtils.getStatusDisplay(TaskStatus.DONE).displayName }
-  ]);
+  ] as const;
 
   constructor() {
     // Load task data when taskId changes
@@ -127,17 +131,19 @@ export class TaskPanelComponent {
     this.loading.set(true);
     this.error.set(null);
 
-    this.taskService.getTask(id).subscribe({
-      next: (task) => {
-        this.task.set(task);
-        this.loading.set(false);
-      },
-      error: (error) => {
-        this.error.set('Failed to load task: ' + (error.message || 'Unknown error'));
-        this.loading.set(false);
-        console.error('Error loading task:', error);
-      }
-    });
+    this.taskService.getTask(id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (task) => {
+          this.task.set(task);
+          this.loading.set(false);
+        },
+        error: (error) => {
+          this.error.set('Failed to load task: ' + (error.message || 'Unknown error'));
+          this.loading.set(false);
+          console.error('Error loading task:', error);
+        }
+      });
   }
 
   toggleEditMode(): void {
@@ -183,41 +189,56 @@ export class TaskPanelComponent {
       version: currentTask.version || 0
     };
 
-    this.taskService.updateTask(updatedTask).subscribe({
-      next: (updatedTask) => {
-        this.task.set(updatedTask);
-        this.isEditing.set(false);
-        this.saving.set(false);
-        this.snackBar.open('Task updated successfully', 'Close', { duration: 3000 });
-      },
-      error: (error) => {
-        this.saving.set(false);
-        
-        // Handle optimistic locking conflicts
-        if (error.error === 'OPTIMISTIC_LOCK_CONFLICT') {
-          this.handleOptimisticLockConflict(error as ConflictErrorResponse);
-        } else {
-          this.snackBar.open('Failed to update task: ' + (error.message || 'Unknown error'), 'Close', { duration: 5000 });
+    this.taskService.updateTask(updatedTask)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (updatedTask) => {
+          this.task.set(updatedTask);
+          this.isEditing.set(false);
+          this.saving.set(false);
+          this.snackBar.open('Task updated successfully', 'Close', { duration: 3000 });
+        },
+        error: (error) => {
+          this.saving.set(false);
+          
+          // Handle optimistic locking conflicts
+          if (error.error === 'OPTIMISTIC_LOCK_CONFLICT') {
+            this.handleOptimisticLockConflict(error as ConflictErrorResponse);
+          } else {
+            this.snackBar.open('Failed to update task: ' + (error.message || 'Unknown error'), 'Close', { duration: 5000 });
+          }
         }
-      }
-    });
+      });
   }
 
   private handleOptimisticLockConflict(conflictError: ConflictErrorResponse): void {
-    const message = `
-      This task was modified by another user while you were editing.
-      
-      Current version: ${conflictError.currentData.version}
-      Your version: ${this.task()?.version || 'unknown'}
-      
-      Would you like to:
-      • Reload the latest version (you will lose your changes)
-      • Force save your changes (overwrite the other changes)
-    `;
-
-    const choice = confirm(message + '\n\nClick OK to reload latest version, Cancel to force save.');
+    const currentVersion = this.task()?.version ?? 0;
+    const serverVersion = conflictError.currentData.version ?? 0;
     
-    if (choice) {
+    const message = `This task was modified by another user while you were editing.\n\n` +
+      `Current server version: ${serverVersion}\n` +
+      `Your version: ${currentVersion}\n\n` +
+      `Would you like to:\n` +
+      `• Reload the latest version (you will lose your changes)\n` +
+      `• Force save your changes (overwrite the other changes)`;
+
+    const dialogData: ConfirmDialogData = {
+      title: 'Conflict Detected',
+      message: message,
+      confirmText: 'Reload Latest',
+      cancelText: 'Force Save',
+      confirmColor: 'primary'
+    };
+
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: '500px',
+      data: dialogData
+    });
+
+    dialogRef.afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((reload: boolean) => {
+        if (reload) {
       // Reload the latest version
       this.task.set(conflictError.currentData);
       this.isEditing.set(false);
@@ -240,19 +261,22 @@ export class TaskPanelComponent {
         version: conflictError.currentData.version! // Use the latest version to force overwrite
       };
 
-      this.taskService.updateTask(forcedUpdate).subscribe({
-        next: (updatedTask) => {
-          this.task.set(updatedTask);
-          this.isEditing.set(false);
-          this.saving.set(false);
-          this.snackBar.open('Task saved with force overwrite', 'Close', { duration: 3000 });
-        },
-        error: (error) => {
-          this.saving.set(false);
-          this.snackBar.open('Failed to force save: ' + (error.message || 'Unknown error'), 'Close', { duration: 5000 });
-        }
-      });
-    }
+      this.taskService.updateTask(forcedUpdate)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (updatedTask) => {
+            this.task.set(updatedTask);
+            this.isEditing.set(false);
+            this.saving.set(false);
+            this.snackBar.open('Task saved with force overwrite', 'Close', { duration: 3000 });
+          },
+          error: (error) => {
+            this.saving.set(false);
+            this.snackBar.open('Failed to force save: ' + (error.message || 'Unknown error'), 'Close', { duration: 5000 });
+          }
+        });
+      }
+    });
   }
 
   duplicateTask(): void {
@@ -266,18 +290,38 @@ export class TaskPanelComponent {
     const currentTask = this.task();
     if (!currentTask?.id) return;
 
-    const confirmMessage = `Are you sure you want to delete "${currentTask.title}"? This action cannot be undone.`;
-    if (confirm(confirmMessage)) {
-      this.taskService.deleteTask(currentTask.id).subscribe({
-        next: () => {
-          this.snackBar.open('Task deleted successfully', 'Close', { duration: 3000 });
-          this.closePanel.emit();
-        },
-        error: (error) => {
-          this.snackBar.open('Failed to delete task: ' + (error.message || 'Unknown error'), 'Close', { duration: 5000 });
+    const taskId = currentTask.id; // Store ID to avoid type issues
+
+    const dialogData: ConfirmDialogData = {
+      title: 'Confirm Delete',
+      message: `Are you sure you want to delete "${currentTask.title}"? This action cannot be undone.`,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      confirmColor: 'warn'
+    };
+
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: '400px',
+      data: dialogData
+    });
+
+    dialogRef.afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((confirmed: boolean) => {
+        if (confirmed && taskId) {
+          this.taskService.deleteTask(taskId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+              next: () => {
+                this.snackBar.open('Task deleted successfully', 'Close', { duration: 3000 });
+                this.closePanel.emit();
+              },
+              error: (error) => {
+                this.snackBar.open('Failed to delete task: ' + (error.message || 'Unknown error'), 'Close', { duration: 5000 });
+              }
+            });
         }
       });
-    }
   }
 
 
@@ -320,7 +364,16 @@ export class TaskPanelComponent {
   }
 
   getActivityCount(): number {
-    // Mock activity count - in a real app this would come from the API
-    return Math.floor(Math.random() * 10) + 1;
+    // Placeholder for activity count - would be fetched from API in production
+    const currentTask = this.task();
+    if (!currentTask) return 0;
+    
+    // Simple heuristic: count based on task updates
+    let count = 1; // At least one activity (creation)
+    if (currentTask.updatedAt && currentTask.createdAt && 
+        currentTask.updatedAt !== currentTask.createdAt) {
+      count++;
+    }
+    return count;
   }
 } 

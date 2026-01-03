@@ -102,7 +102,7 @@
     <!-- Sort Menu -->
     <mat-menu #sortMenu="matMenu" class="jira-dropdown-menu">
       <div class="dropdown-header">Sort By</div>
-      @for (option of sortOptions(); track option.value) {
+      @for (option of sortOptions; track option.value) {
         <button mat-menu-item 
                 [class.active]="currentSort() === option.value"
                 (click)="setSortOption(option.value)">
@@ -172,7 +172,7 @@
         </button>
         }
       </div>
-      @for (priority of priorityOptions(); track priority.value) {
+      @for (priority of priorityOptions; track priority.value) {
         <mat-checkbox 
           class="dropdown-option"
           [checked]="isPrioritySelected(priority.value)"
@@ -200,7 +200,7 @@
     <!-- Kanban Board with Unified Scrolling -->
     <div class="kanban-board-container">
       <div class="kanban-board" cdkDropListGroup>
-        @for (status of kanbanStatuses(); track status.value) {
+        @for (status of kanbanStatuses; track status.value) {
           <div class="kanban-column">
             
             <!-- Column Header -->

@@ -1,30 +1,36 @@
 # ProjectBoard
 
-A modern task management application built with Angular 20 and Spring Boot. Features a complete kanban workflow with drag-and-drop, real-time updates, and conflict resolution.
+A modern task management application built with Angular 20 and Spring Boot. Features secure user authentication, complete kanban workflow with drag-and-drop, real-time updates, and conflict resolution.
 
 ## Features
 
 ### Core Functionality
+- **User Authentication**: Secure JWT-based authentication with login and registration
 - **Task Management**: Create, edit, delete, and organize tasks
 - **Sprint Board**: Drag-and-drop kanban interface with status columns
 - **Dashboard**: Project overview with statistics and quick actions
 - **Conflict Resolution**: Optimistic locking prevents data corruption
 - **Real-time Updates**: Live status changes and progress tracking
+- **Protected Routes**: Route guards ensure only authenticated users can access the application
 
 ### Frontend Pages
-- **Dashboard** (`/dashboard`) - Project overview with task statistics
-- **Task List** (`/tasks`) - Comprehensive task management with filtering
-- **Task Form** (`/tasks/new`, `/tasks/:id/edit`) - Create and edit tasks
-- **Sprint Board** (`/board`) - Kanban interface with drag-and-drop
+- **Login** (`/login`) - User authentication with JWT token management
+- **Register** (`/register`) - New user registration with validation
+- **Dashboard** (`/dashboard`) - Project overview with task statistics (protected)
+- **Task List** (`/tasks`) - Comprehensive task management with filtering (protected)
+- **Task Form** (`/tasks/new`, `/tasks/:id/edit`) - Create and edit tasks (protected)
+- **Sprint Board** (`/board`) - Kanban interface with drag-and-drop (protected)
 
 ## Technology Stack
 
 ### Backend
 - **Spring Boot 3.5.3** with Java 21
-- **H2 Database** with JPA for persistence
+- **MySQL Database** with JPA for persistence
+- **Spring Security** with JWT authentication
 - **REST API** with comprehensive CRUD operations
 - **Optimistic Locking** using @Version for conflict handling
 - **Exception Handling** with global error management
+- **BCrypt** password encoding for secure password storage
 
 ### Frontend
 - **Angular 20** with standalone components
@@ -32,6 +38,8 @@ A modern task management application built with Angular 20 and Spring Boot. Feat
 - **Signals** for reactive state management
 - **CDK Drag & Drop** for kanban functionality
 - **Reactive Forms** with validation
+- **HTTP Interceptors** for automatic JWT token injection
+- **Route Guards** for protected routes
 
 ## Development Workflow
 
@@ -52,12 +60,15 @@ A modern task management application built with Angular 20 and Spring Boot. Feat
 #### Backend Structure
 ```
 backend/src/main/java/com/projectboard/
-├── entity/          # JPA entities (Task)
+├── entity/          # JPA entities (Task, User)
 ├── repository/      # Spring Data repositories  
 ├── service/         # Business logic layer
 ├── controller/      # REST API endpoints
 ├── dto/            # Data transfer objects
-└── exception/      # Error handling
+├── exception/      # Error handling
+├── config/         # Configuration (Security, CORS)
+├── security/       # JWT authentication filter
+└── util/           # Utilities (JWT token management)
 ```
 
 #### Frontend Structure
@@ -65,7 +76,13 @@ backend/src/main/java/com/projectboard/
 frontend/src/app/
 ├── components/     # Reusable UI components
 ├── pages/         # Route-specific page components
+│   ├── login/     # Login page
+│   └── register/  # Registration page
 ├── services/      # API integration services
+│   ├── auth.service.ts    # Authentication service
+│   └── user.service.ts    # User management service
+├── guards/        # Route guards (auth.guard.ts)
+├── interceptors/  # HTTP interceptors (auth.interceptor.ts)
 ├── models/        # TypeScript interfaces
 └── shared/        # Common utilities
 ```
@@ -75,6 +92,7 @@ frontend/src/app/
 ### Prerequisites
 - Node.js 22+
 - Java 21+
+- MySQL 8.0+ (or Docker for MySQL)
 - Git
 
 ### Installation
@@ -83,8 +101,13 @@ frontend/src/app/
 git clone https://github.com/tusharkh12/ProjectBoard.git
 cd ProjectBoard
 
+# Database setup (using Docker)
+cd backend
+docker-compose up -d  # Starts MySQL container
+
 # Backend setup
 cd backend
+# Configure database credentials in application.yml if needed
 ./gradlew build
 
 # Frontend setup  
@@ -117,16 +140,22 @@ npm run lint           # Code linting
 
 ## API Endpoints
 
-### Tasks
+### Authentication (Public)
+- `POST /api/auth/login` - User login (returns JWT token)
+- `POST /api/auth/register` - Register new user
+
+### Tasks (Protected - Requires JWT)
 - `GET /api/tasks` - List all tasks with filtering
 - `POST /api/tasks` - Create new task
 - `GET /api/tasks/{id}` - Get task by ID
 - `PUT /api/tasks/{id}` - Update existing task
 - `DELETE /api/tasks/{id}` - Delete task
 
-### Statistics
+### Statistics (Protected - Requires JWT)
 - `GET /api/tasks/statistics` - Task completion metrics
 - `GET /api/tasks/search` - Search tasks by criteria
+
+**Note:** All task endpoints require authentication. Include JWT token in `Authorization: Bearer <token>` header.
 
 ## Project Management
 
@@ -147,6 +176,18 @@ npm run lint           # Code linting
 ---
 
 ## Application Screenshots
+
+### Authentication Pages
+
+#### Login
+Secure login page with form validation and error handling
+
+![Login](frontend/docs/screenshots/user/login.png)
+
+#### Register
+User registration with email validation and password requirements
+
+![Register](frontend/docs/screenshots/user/register.png)
 
 ### Main Application Pages
 
@@ -179,10 +220,22 @@ Advanced optimistic locking with conflict detection and resolution options
 
 ## Key Features Demonstrated
 
+- ✅ **Secure Authentication**: JWT-based authentication with protected routes and automatic token management
+- ✅ **User Management**: Registration and login with password encryption (BCrypt)
 - ✅ **Professional UI/UX**: Modern Material Design with dark mode support
 - ✅ **Conflict Resolution**: Optimistic locking prevents data loss in multi-user environments
 - ✅ **Real-time Updates**: Live status changes and progress tracking
 - ✅ **Responsive Design**: Consistent experience across all device sizes
 - ✅ **Data Integrity**: Version control and conflict management for collaborative editing
+- ✅ **API Security**: CORS configuration and JWT token validation
+
+## Security Features
+
+- **JWT Authentication**: Stateless authentication with secure token storage
+- **Password Encryption**: BCrypt password hashing
+- **Protected Routes**: Frontend route guards prevent unauthorized access
+- **HTTP Interceptors**: Automatic JWT token injection for API requests
+- **CORS Configuration**: Properly configured cross-origin resource sharing
+- **Input Validation**: Both frontend and backend validation for data integrity
 
 Built with modern web technologies for efficient task management and team collaboration.

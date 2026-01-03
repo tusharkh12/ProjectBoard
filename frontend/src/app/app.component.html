@@ -120,9 +120,19 @@
 
       <div class="yt-header-actions">
         <!-- User Menu -->
-        <div class="yt-user-menu">
-          <div class="yt-avatar">U</div>
-        </div>
+        @if (isAuthenticated()) {
+          <div class="yt-user-menu">
+            <div class="yt-avatar" title="{{ username() }}">
+              {{ (username()?.charAt(0) || 'U').toUpperCase() }}
+            </div>
+            <button 
+              class="yt-logout-btn" 
+              (click)="logout()"
+              title="Logout"
+              aria-label="Logout">
+            </button>
+          </div>
+        }
       </div>
     </header>
 

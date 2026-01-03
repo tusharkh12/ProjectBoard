@@ -1,4 +1,5 @@
-import { Component, inject, signal, input, output, computed, effect } from '@angular/core';
+import { Component, inject, signal, input, output, computed, effect, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
@@ -67,6 +68,7 @@ export class TaskEditorComponent {
   private readonly dialogRef = inject(MatDialogRef<TaskEditorComponent>);
   private readonly data = inject<TaskEditorData>(MAT_DIALOG_DATA);
   private readonly fb = inject(FormBuilder);
+  private readonly destroyRef = inject(DestroyRef);
 
   // Expose utilities for template
   readonly IssueUtils = IssueUtils;
@@ -166,21 +168,20 @@ export class TaskEditorComponent {
     tagInput: [''] // For chip input autocomplete
   });
 
-  // Options for dropdowns
-  readonly statusOptions = signal([
+  readonly statusOptions = [
     { value: TaskStatus.BACKLOG, label: TaskUtils.getStatusDisplay(TaskStatus.BACKLOG).displayName },
     { value: TaskStatus.IN_PROGRESS, label: TaskUtils.getStatusDisplay(TaskStatus.IN_PROGRESS).displayName },
     { value: TaskStatus.REVIEW, label: TaskUtils.getStatusDisplay(TaskStatus.REVIEW).displayName },
     { value: TaskStatus.TESTING, label: TaskUtils.getStatusDisplay(TaskStatus.TESTING).displayName },
     { value: TaskStatus.DONE, label: TaskUtils.getStatusDisplay(TaskStatus.DONE).displayName }
-  ]);
+  ] as const;
 
-  readonly priorityOptions = signal([
+  readonly priorityOptions = [
     { value: TaskPriority.LOW, label: TaskUtils.getPriorityDisplay(TaskPriority.LOW).displayName },
     { value: TaskPriority.MEDIUM, label: TaskUtils.getPriorityDisplay(TaskPriority.MEDIUM).displayName },
     { value: TaskPriority.HIGH, label: TaskUtils.getPriorityDisplay(TaskPriority.HIGH).displayName },
     { value: TaskPriority.CRITICAL, label: TaskUtils.getPriorityDisplay(TaskPriority.CRITICAL).displayName }
-  ]);
+  ] as const;
 
   constructor() {
     // Subscribe to form changes to update reactive signal
@@ -244,67 +245,71 @@ export class TaskEditorComponent {
     }
   }
 
-  private createTask(formValue: any): void {
+  private createTask(formValue: Record<string, unknown>): void {
     const newTask: CreateTaskRequest = {
-      title: formValue.title,
-      summary: formValue.title,
-      description: formValue.description || '',
-      status: formValue.status,
-      priority: formValue.priority,
-      assignee: formValue.assignee || undefined,
-      estimatedHours: formValue.estimatedHours || undefined,
-      tags: formValue.tags || undefined
+      title: formValue['title'] as string,
+      summary: formValue['title'] as string,
+      description: (formValue['description'] as string) || '',
+      status: formValue['status'] as TaskStatus,
+      priority: formValue['priority'] as TaskPriority,
+      assignee: (formValue['assignee'] as string) || undefined,
+      estimatedHours: (formValue['estimatedHours'] as number) || undefined,
+      tags: (formValue['tags'] as string) || undefined
     };
 
-    this.taskService.createTask(newTask).subscribe({
-      next: (createdTask) => {
-        this.saving.set(false);
-        this.snackBar.open('Task created successfully', 'Close', { duration: 3000 });
-        this.dialogRef.close(createdTask);
-      },
-      error: (error) => {
-        this.saving.set(false);
-        this.snackBar.open('Failed to create task: ' + (error.message || 'Unknown error'), 'Close', { duration: 5000 });
-      }
-    });
+    this.taskService.createTask(newTask)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (createdTask) => {
+          this.saving.set(false);
+          this.snackBar.open('Task created successfully', 'Close', { duration: 3000 });
+          this.dialogRef.close(createdTask);
+        },
+        error: (error) => {
+          this.saving.set(false);
+          this.snackBar.open('Failed to create task: ' + (error.message || 'Unknown error'), 'Close', { duration: 5000 });
+        }
+      });
   }
 
-  private updateTask(formValue: any): void {
+  private updateTask(formValue: Record<string, unknown>): void {
     const currentTask = this.task()!;
     const updatedTask: UpdateTaskRequest = {
       id: currentTask.id!,
-      summary: formValue.title,
-      title: formValue.title,
-      description: formValue.description || '',
-      status: formValue.status,
-      priority: formValue.priority,
-      assignee: formValue.assignee || undefined,
-      estimatedHours: formValue.estimatedHours || undefined,
-      tags: formValue.tags || undefined,
+      summary: formValue['title'] as string,
+      title: formValue['title'] as string,
+      description: (formValue['description'] as string) || '',
+      status: formValue['status'] as TaskStatus,
+      priority: formValue['priority'] as TaskPriority,
+      assignee: (formValue['assignee'] as string) || undefined,
+      estimatedHours: (formValue['estimatedHours'] as number) || undefined,
+      tags: (formValue['tags'] as string) || undefined,
       version: currentTask.version || 0
     };
 
-    this.taskService.updateTask(updatedTask).subscribe({
-      next: (updatedTask) => {
-        this.saving.set(false);
-        this.snackBar.open('Task updated successfully', 'Close', { duration: 3000 });
-        this.dialogRef.close(updatedTask);
-      },
-      error: (error) => {
-        this.saving.set(false);
-        
-        // Handle optimistic locking conflicts  
-        if (error.error === 'OPTIMISTIC_LOCK_CONFLICT') {
-          this.handleOptimisticLockConflict(error);
-        } else {
-          this.snackBar.open('Failed to update task: ' + (error.message || 'Unknown error'), 'Close', { duration: 5000 });
+    this.taskService.updateTask(updatedTask)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (updatedTask) => {
+          this.saving.set(false);
+          this.snackBar.open('Task updated successfully', 'Close', { duration: 3000 });
+          this.dialogRef.close(updatedTask);
+        },
+        error: (error) => {
+          this.saving.set(false);
+          
+          // Handle optimistic locking conflicts  
+          if (error.error === 'OPTIMISTIC_LOCK_CONFLICT') {
+            this.handleOptimisticLockConflict(error);
+          } else {
+            this.snackBar.open('Failed to update task: ' + (error.message || 'Unknown error'), 'Close', { duration: 5000 });
+          }
         }
-      }
-    });
+      });
   }
 
   private handleOptimisticLockConflict(conflictError: ConflictErrorResponse): void {
-    console.log('Conflict detected:', conflictError);
+    console.log('Optimistic locking conflict detected:', conflictError);
     this.conflictData.set(conflictError);
     this.showConflictDialog.set(true);
   }
@@ -419,18 +424,20 @@ export class TaskEditorComponent {
       version: this.conflictData()!.currentData.version!
     };
 
-    this.taskService.updateTask(mergedUpdate).subscribe({
-      next: (updatedTask) => {
-        this.saving.set(false);
-        this.showMergeDialog.set(false);
-        this.snackBar.open('Changes merged and saved successfully', 'Close', { duration: 3000 });
-        this.dialogRef.close(updatedTask);
-      },
-      error: (error) => {
-        this.saving.set(false);
-        this.snackBar.open('Failed to save merged changes: ' + (error.message || 'Unknown error'), 'Close', { duration: 5000 });
-      }
-    });
+    this.taskService.updateTask(mergedUpdate)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (updatedTask) => {
+          this.saving.set(false);
+          this.showMergeDialog.set(false);
+          this.snackBar.open('Changes merged and saved successfully', 'Close', { duration: 3000 });
+          this.dialogRef.close(updatedTask);
+        },
+        error: (error) => {
+          this.saving.set(false);
+          this.snackBar.open('Failed to save merged changes: ' + (error.message || 'Unknown error'), 'Close', { duration: 5000 });
+        }
+      });
   }
 
   cancelMerge(): void {
@@ -438,8 +445,23 @@ export class TaskEditorComponent {
     this.showConflictDialog.set(true);
   }
 
-  getCurrentFormValue(field: string): any {
+  getCurrentFormValue(field: string): unknown {
     return this.taskForm.get(field)?.value || '';
+  }
+
+  getCurrentFormValueAsString(field: string): string {
+    const value = this.taskForm.get(field)?.value;
+    return value ? String(value) : '';
+  }
+
+  getCurrentFormValueAsStatus(field: string): TaskStatus {
+    const value = this.taskForm.get(field)?.value;
+    return (value as TaskStatus) || TaskStatus.BACKLOG;
+  }
+
+  getCurrentFormValueAsPriority(field: string): TaskPriority {
+    const value = this.taskForm.get(field)?.value;
+    return (value as TaskPriority) || TaskPriority.MEDIUM;
   }
 
   hasFieldConflict(field: string): boolean {
@@ -447,10 +469,10 @@ export class TaskEditorComponent {
     
     const currentValue = this.getCurrentFormValue(field);
     const serverTask = this.conflictData()!.currentData;
-    const serverValue = (serverTask as any)[field];
+    const serverValue = (serverTask as unknown as Record<string, unknown>)[field];
     
     // Handle null/undefined values
-    const normalizeValue = (val: any) => val === null || val === undefined ? '' : String(val);
+    const normalizeValue = (val: unknown) => val === null || val === undefined ? '' : String(val);
     
     return normalizeValue(currentValue) !== normalizeValue(serverValue);
   }
@@ -480,9 +502,13 @@ export class TaskEditorComponent {
   }
 
   getFieldDisplayValue(field: string, source: 'user' | 'server'): string {
+    const conflictData = this.conflictData();
+    if (!conflictData) return 'No value';
+
+    const serverTask = conflictData.currentData as unknown as Record<string, unknown>;
     const value = source === 'user' 
       ? this.getCurrentFormValue(field)
-      : (this.conflictData()!.currentData as any)[field];
+      : serverTask[field];
 
     if (value === null || value === undefined || value === '') {
       return 'No value';
@@ -616,14 +642,16 @@ export class TaskEditorComponent {
   }
 
   // Form value signal to track reactive changes
-  private readonly _formValue = signal<any>({});
+  private readonly _formValue = signal<Record<string, unknown>>({});
 
   // Track form changes
   readonly hasFormChanges = computed(() => {
     if (!this.isEditMode()) {
       // For create mode, form is "changed" if any required fields are filled
       const formValue = this._formValue();
-      return !!(formValue.title?.trim() || formValue.description?.trim());
+      const title = (formValue['title'] as string) || '';
+      const description = (formValue['description'] as string) || '';
+      return !!(title.trim() || description.trim());
     }
 
     // For edit mode, compare current form values with original task
@@ -634,12 +662,12 @@ export class TaskEditorComponent {
     if (!currentTask) return false;
 
     return (
-      formValue.title !== currentTask.title ||
-      (formValue.description || '') !== (currentTask.description || '') ||
-      formValue.status !== currentTask.status ||
-      formValue.priority !== currentTask.priority ||
-      (formValue.assignee || '') !== (currentTask.assignee || '') ||
-      (formValue.estimatedHours || 0) !== (currentTask.estimatedHours || 0) ||
+      (formValue['title'] as string) !== currentTask.title ||
+      ((formValue['description'] as string) || '') !== (currentTask.description || '') ||
+      (formValue['status'] as TaskStatus) !== currentTask.status ||
+      (formValue['priority'] as TaskPriority) !== currentTask.priority ||
+      ((formValue['assignee'] as string) || '') !== (currentTask.assignee || '') ||
+      ((formValue['estimatedHours'] as number) || 0) !== (currentTask.estimatedHours || 0) ||
       currentTags !== (currentTask.tags || '')
     );
   });
